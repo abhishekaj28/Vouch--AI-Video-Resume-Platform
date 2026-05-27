@@ -51,7 +51,7 @@ export function Preloader() {
       </div>
 
       {/* Mini custom animation keyframe overrides */}
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @keyframes scroll-x {
           0% { transform: translateX(-100%); }
           100% { transform: translateX(100%); }
@@ -66,7 +66,7 @@ export function Preloader() {
         .animate-fade-in {
           animation: fade-in 1s forwards ease-out;
         }
-      `}</style>
+      `}} />
     </div>
   );
 }
