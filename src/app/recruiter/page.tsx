@@ -27,6 +27,12 @@ export default function RecruiterDashboard() {
   // Dynamic candidate status tracking
   const [candidateStatuses, setCandidateStatuses] = useState<Record<string, Status>>({});
 
+  // Interview scheduling modal states
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [scheduleTime, setScheduleTime] = useState("2026-06-05T14:00");
+  const [meetingLink, setMeetingLink] = useState("https://meet.google.com/abc-defg-hij");
+  const [notes, setNotes] = useState("Vouch AI Technical Interview Session");
+
   useEffect(() => {
     const getData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -591,7 +597,7 @@ export default function RecruiterDashboard() {
                 {/* Status action tools */}
                 <div className="flex flex-wrap gap-2.5">
                   <button
-                    onClick={() => updateCandidateStatus(sel.id, "Interview")}
+                    onClick={() => setIsScheduleModalOpen(true)}
                     className="inline-flex h-10 items-center gap-2 rounded-lg bg-success px-4 text-sm font-bold text-white hover:brightness-110 transition shadow-md"
                   >
                     <CheckCircle className="h-4.5 w-4.5" /> Move to Interview
@@ -705,6 +711,107 @@ export default function RecruiterDashboard() {
           </div>
         </div>
       </main>
+
+      {/* Interactivity: Interview Scheduling Modal */}
+      {isScheduleModalOpen && sel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-panel p-6 shadow-2xl animate-in zoom-in duration-200 relative overflow-hidden text-left">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-brand/3 rounded-full blur-3xl pointer-events-none" />
+            
+            <h3 className="font-heading text-lg font-black text-white flex items-center gap-2 mb-1">
+              📅 Schedule Technical Session
+            </h3>
+            <p className="text-xs text-muted-foreground font-semibold mb-5">
+              Book a structured calendar invite for {sel.profiles?.full_name || "Candidate"}
+            </p>
+
+            <div className="space-y-4 text-xs font-bold text-white">
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Interview Date & Time</label>
+                <input
+                  type="datetime-local"
+                  value={scheduleTime}
+                  onChange={(e) => setScheduleTime(e.target.value)}
+                  className="w-full h-11 rounded-lg border border-border bg-card px-3 text-xs text-white outline-none focus:border-brand transition"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Meeting Link</label>
+                <input
+                  type="url"
+                  value={meetingLink}
+                  onChange={(e) => setMeetingLink(e.target.value)}
+                  placeholder="https://meet.google.com/abc-defg-hij"
+                  className="w-full h-11 rounded-lg border border-border bg-card px-3 text-xs text-white placeholder:text-muted-foreground outline-none focus:border-brand transition"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Recruiter Notes</label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Provide meeting agenda or skill focus..."
+                  className="w-full h-24 rounded-lg border border-border bg-card p-3 text-xs text-white placeholder:text-muted-foreground outline-none focus:border-brand transition resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3.5">
+              <button
+                onClick={() => setIsScheduleModalOpen(false)}
+                className="h-10 rounded-lg border border-border bg-transparent px-4 text-xs font-bold text-white hover:bg-white/5 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!scheduleTime) {
+                    toast.error("Please specify a valid schedule date and time.");
+                    return;
+                  }
+                  
+                  setIsScheduleModalOpen(false);
+                  
+                  toast.promise(
+                    fetch("/api/recruiter/schedule-interview", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        applicationId: sel.applicationId || sel.id,
+                        candidateId: sel.candidate_id,
+                        recruiterId: profile?.id,
+                        scheduledAt: new Date(scheduleTime).toISOString(),
+                        meetingLink,
+                        notes
+                      }),
+                    }).then(async (res) => {
+                      if (!res.ok) throw new Error("Scheduling failed");
+                      
+                      // Update status locally in state
+                      setCandidateStatuses((prev) => ({
+                        ...prev,
+                        [sel.id]: "Interview",
+                      }));
+                      
+                      return res.json();
+                    }),
+                    {
+                      loading: "Booking technical assessment session...",
+                      success: "Technical interview session successfully booked!",
+                      error: "Failed to schedule interview.",
+                    }
+                  );
+                }}
+                className="h-10 rounded-lg bg-brand px-5 text-xs font-bold text-brand-foreground hover:brightness-110 transition shadow-md shadow-brand/20"
+              >
+                Confirm Booking
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

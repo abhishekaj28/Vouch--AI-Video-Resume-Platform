@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Video, Zap, Briefcase, Camera, ArrowRight, RefreshCw, Brain, FileText, CheckCircle, Share2 } from "lucide-react";
+import { Video, Zap, Briefcase, Camera, ArrowRight, RefreshCw, Brain, FileText, CheckCircle, Share2, Award } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import * as RechartsPrimitive from "recharts";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
@@ -53,6 +53,8 @@ export default function CandidateDashboard() {
   const [videoResume, setVideoResume] = useState<any>(null);
   const [jobs, setJobs] = useState<any[]>([]);
   const [applications, setApplications] = useState<any[]>([]);
+  const [interviews, setInterviews] = useState<any[]>([]);
+  const [assessments, setAssessments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedJob, setSelectedJob] = useState<any | null>(null);
   const [applying, setApplying] = useState(false);
@@ -98,6 +100,28 @@ export default function CandidateDashboard() {
         .eq("candidate_id", user.id)
         .order("created_at", { ascending: false });
       setApplications(dbApps || []);
+
+      try {
+        const { data: dbInterviews } = await supabase
+          .from("interviews")
+          .select("*, recruiter:recruiter_id(*)")
+          .eq("candidate_id", user.id)
+          .order("scheduled_at", { ascending: true });
+        setInterviews(dbInterviews || []);
+      } catch (err) {
+        console.warn("Failed to fetch interviews:", err);
+      }
+
+      try {
+        const { data: dbAssessments } = await supabase
+          .from("assessments")
+          .select("*")
+          .eq("candidate_id", user.id)
+          .order("completed_at", { ascending: false });
+        setAssessments(dbAssessments || []);
+      } catch (err) {
+        console.warn("Failed to fetch assessments:", err);
+      }
 
       const displayedList = activeJobs.length > 0 ? activeJobs : [
         { id: "11111111-1111-1111-1111-111111111111", title: "Frontend Engineer", company: "Razorpay", location: "Bangalore · Remote", required_skills: ["React", "TypeScript", "Next.js"], description: "Join our core UI engineering team to build highly performant consumer checkout experiences. You will design clean modular components, optimize layout rendering speeds, and integrate next-generation client APIs." },
@@ -182,7 +206,7 @@ export default function CandidateDashboard() {
         </div>
 
         {/* Stats Section with glassmorphic cards */}
-        <div className="mt-8 grid gap-5 sm:grid-cols-3">
+        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-[16px] border border-border bg-card p-5 hover:border-brand/35 hover:shadow-[0_0_30px_-5px_rgba(245,197,24,0.12)] transition-all duration-300">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -218,6 +242,25 @@ export default function CandidateDashboard() {
                 <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-bold">Submitted Applications</div>
                 <div className="mt-1 font-heading text-2xl font-black text-white">{applications.length}</div>
               </div>
+            </div>
+          </div>
+          <div className="rounded-[16px] border border-border bg-card p-5 hover:border-brand/35 hover:shadow-[0_0_30px_-5px_rgba(245,197,24,0.12)] transition-all duration-300 relative group overflow-hidden">
+            <Link href="/candidate/assessment" className="absolute inset-0 z-10" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-xl bg-brand/10 text-brand animate-pulse">
+                  <Award className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-bold">Skill Rating</div>
+                  <div className="mt-1 font-heading text-2xl font-black text-white">
+                    {assessments.length > 0 ? `${Math.max(...assessments.map(a => a.score))}%` : "0%"}
+                  </div>
+                </div>
+              </div>
+              <span className="rounded-full bg-brand/15 px-2.5 py-1 text-[9px] font-bold text-brand uppercase border border-brand/20 tracking-wider group-hover:bg-brand group-hover:text-brand-foreground transition shrink-0 z-20">
+                Quiz →
+              </span>
             </div>
           </div>
         </div>
@@ -575,6 +618,60 @@ export default function CandidateDashboard() {
             </div>
           )}
         </div>
+
+        {/* Scheduled Technical Session Interviews */}
+        {interviews && interviews.length > 0 && (
+          <div className="mt-12 animate-in fade-in duration-300">
+            <h2 className="font-heading text-2xl font-extrabold tracking-tight text-white mb-1">Upcoming Technical Sessions</h2>
+            <p className="text-sm text-muted-foreground font-medium mb-6">Structured virtual meetings booked by recruiter command centers.</p>
+            
+            <div className="grid gap-5 sm:grid-cols-2">
+              {interviews.map((int) => {
+                const formattedDate = new Date(int.scheduled_at).toLocaleString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                });
+
+                return (
+                  <div key={int.id} className="rounded-2xl border border-brand/20 bg-brand/5 p-6 relative overflow-hidden shadow-lg hover:border-brand/45 transition duration-300">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-brand/3 rounded-full blur-2xl pointer-events-none" />
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <span className="rounded-full bg-brand/10 border border-brand/20 px-3 py-0.5 text-[9px] font-bold text-brand uppercase tracking-wider">
+                          Live Interview Slot
+                        </span>
+                        <h3 className="font-heading text-base font-black text-white mt-2">
+                          {formattedDate}
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-1 font-semibold">
+                          Booked by Recruiter: <span className="text-white">{int.recruiter?.full_name || "Technical Lead"}</span> ({int.recruiter?.email || "recruiter@vouch.ai"})
+                        </p>
+                        {int.notes && (
+                          <div className="mt-3.5 rounded-lg bg-card/60 p-3 text-[11px] font-medium text-muted-foreground border border-border/40">
+                            💡 <span className="text-white/80 font-bold">Notes:</span> {int.notes}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <a
+                        href={int.meeting_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 rounded-lg bg-brand px-4 py-2 text-xs font-bold text-brand-foreground hover:brightness-110 transition shadow-md shadow-brand/20 flex items-center gap-1.5"
+                      >
+                        <Zap className="h-3.5 w-3.5 shrink-0" /> Join Meet
+                      </a>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Live Database-Backed Jobs Section - Upgraded to World-Class Job Hunt Center */}
         <div id="browse-jobs" className="mt-16 scroll-mt-20">
