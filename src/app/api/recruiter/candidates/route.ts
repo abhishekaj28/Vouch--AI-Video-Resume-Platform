@@ -40,7 +40,8 @@ export async function GET(request: NextRequest) {
           ...app.video_resumes,
           pipelineStatus: app.stage ? (app.stage[0].toUpperCase() + app.stage.slice(1)) : 'Applied',
           jobTitle: jobsMap.get(app.job_id)?.title || 'Frontend Engineer',
-          jobId: app.job_id
+          jobId: app.job_id,
+          rejection_feedback: app.rejection_feedback
         })
         processedCandidateIds.add(app.candidate_id)
       })

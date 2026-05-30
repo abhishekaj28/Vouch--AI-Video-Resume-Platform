@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Video, Zap, Briefcase, Camera, ArrowRight, RefreshCw, Brain, FileText, CheckCircle } from "lucide-react";
+import { Video, Zap, Briefcase, Camera, ArrowRight, RefreshCw, Brain, FileText, CheckCircle, Share2 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import * as RechartsPrimitive from "recharts";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+import { toast } from "sonner";
 
 function ScoreRing({ value, color, label }: { value: number; color: string; label: string }) {
   const r = 36;
@@ -462,12 +463,24 @@ export default function CandidateDashboard() {
                     ))
                   )}
                 </div>
-                <Link
-                  href="/candidate/upload"
-                  className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-transparent px-4 text-sm font-semibold text-white hover:border-brand/60 hover:bg-white/5 transition duration-200"
-                >
-                  <RefreshCw className="h-4 w-4" /> Re-record Pitch
-                </Link>
+                <div className="flex flex-wrap gap-2.5">
+                  <button
+                    onClick={() => {
+                      const shareUrl = window.location.origin + "/share/" + videoResume.id;
+                      navigator.clipboard.writeText(shareUrl);
+                      toast.success("Public portfolio share link copied to clipboard!");
+                    }}
+                    className="inline-flex h-10 items-center gap-2 rounded-lg bg-brand px-4 text-sm font-bold text-brand-foreground hover:brightness-110 transition duration-200 shadow-md shadow-brand/20"
+                  >
+                    <Share2 className="h-4 w-4" /> Share Portfolio
+                  </button>
+                  <Link
+                    href="/candidate/upload"
+                    className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-transparent px-4 text-sm font-semibold text-white hover:border-brand/60 hover:bg-white/5 transition duration-200"
+                  >
+                    <RefreshCw className="h-4 w-4" /> Re-record Pitch
+                  </Link>
+                </div>
               </div>
             </div>
           )}
@@ -544,6 +557,16 @@ export default function CandidateDashboard() {
                             </div>
                           );
                         })}
+                      </div>
+                    )}
+                    {isRejected && (
+                      <div className="mt-4 rounded-xl border border-error/25 bg-error/5 p-4 animate-in fade-in duration-300 relative z-10">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-error mb-2">
+                          <Brain className="h-4 w-4 text-error shrink-0" /> AI Growth & Constructive Feedback
+                        </div>
+                        <p className="text-[11px] leading-relaxed text-muted-foreground whitespace-pre-line font-medium">
+                          {app.rejection_feedback || "Rejection constructive feedback is pending AI analysis."}
+                        </p>
                       </div>
                     )}
                   </div>

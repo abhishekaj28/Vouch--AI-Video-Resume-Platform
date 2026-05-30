@@ -7,6 +7,7 @@ import { Users, Star, ClipboardList, CheckCircle2, Search, Mail, Calendar, X, Br
 import { Navbar } from "@/components/Navbar";
 import * as RechartsPrimitive from "recharts";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+import { toast } from "sonner";
 
 type Status = "Applied" | "Reviewed" | "Interview" | "Hired" | "Rejected";
 
@@ -183,6 +184,8 @@ export default function RecruiterDashboard() {
         .eq("video_resume_id", cId)
         .maybeSingle();
 
+      let appId = existingApp?.id;
+
       if (existingApp) {
         await supabase
           .from("applications")
@@ -193,20 +196,53 @@ export default function RecruiterDashboard() {
         const jobId = jobs && jobs.length > 0 ? jobs[0].id : null;
 
         if (jobId) {
-          await supabase
+          const { data: insertedApp } = await supabase
             .from("applications")
             .insert({
               candidate_id: targetCandidate.candidate_id,
               video_resume_id: cId,
               job_id: jobId,
               stage: stageValue
-            });
+            })
+            .select("id")
+            .single();
+          
+          appId = insertedApp?.id;
         } else {
           console.warn("No jobs found in database to link application. Updating local state only.");
         }
       }
+
+      if (newStatus === "Rejected" && appId) {
+        toast.promise(
+          fetch("/api/recruiter/reject-feedback", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ applicationId: appId }),
+          }).then(async (res) => {
+            if (!res.ok) throw new Error("Failed to generate feedback");
+            const data = await res.json();
+            
+            // Update candidates state with the generated rejection feedback
+            setCandidates((prevCandidates) =>
+              prevCandidates.map((c) =>
+                c.id === cId ? { ...c, rejection_feedback: data.feedback } : c
+              )
+            );
+            return data;
+          }),
+          {
+            loading: "Generating constructive AI rejection feedback...",
+            success: "AI constructive rejection feedback generated successfully!",
+            error: "Failed to generate AI rejection feedback.",
+          }
+        );
+      } else {
+        toast.success(`Candidate moved to ${newStatus}`);
+      }
     } catch (err) {
       console.warn("Failed to persist application stage to database, fallback to local state:", err);
+      toast.error("Failed to update candidate status");
     }
   };
 
@@ -621,6 +657,18 @@ export default function RecruiterDashboard() {
                     {sel.ai_summary || "Evaluation summary generated from speech patterns and content pitch structure is active."}
                   </p>
                 </div>
+
+                {/* AI Rejection feedback display */}
+                {selStatus === "Rejected" && (
+                  <div className="rounded-[16px] border border-error/30 bg-error/5 p-5 animate-in fade-in duration-300">
+                    <div className="flex items-center gap-2 text-sm font-bold text-error mb-2">
+                      <Brain className="h-4.5 w-4.5 text-error" /> AI Rejection Constructive Feedback
+                    </div>
+                    <p className="text-xs leading-relaxed text-muted-foreground font-medium whitespace-pre-line">
+                      {sel.rejection_feedback || "Generating constructive AI feedback to help the candidate improve in their next applications..."}
+                    </p>
+                  </div>
+                )}
 
                 {/* Detected Skill pills */}
                 <div>
