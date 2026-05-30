@@ -75,7 +75,7 @@ export default function CandidateDashboard() {
         return;
       }
       if (profile.role !== "candidate") {
-        router.push("/recruiter");
+        router.push("/auth");
         return;
       }
       setProfile(profile);

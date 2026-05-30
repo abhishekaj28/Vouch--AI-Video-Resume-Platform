@@ -41,7 +41,7 @@ export default function RecruiterDashboard() {
         return;
       }
       if (profile.role !== "recruiter") {
-        router.push("/candidate");
+        router.push("/auth");
         return;
       }
       setProfile(profile);

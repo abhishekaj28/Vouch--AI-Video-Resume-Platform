@@ -36,7 +36,7 @@ export default function PostJobPage() {
         return;
       }
       if (profile.role !== "recruiter") {
-        router.push("/candidate");
+        router.push("/auth");
         return;
       }
       const name = profile.full_name || "";

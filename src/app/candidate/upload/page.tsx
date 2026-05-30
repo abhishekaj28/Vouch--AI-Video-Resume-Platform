@@ -87,7 +87,7 @@ export default function UploadPage() {
         return;
       }
       if (profile.role !== "candidate") {
-        router.push("/recruiter");
+        router.push("/auth");
         return;
       }
       setProfile(profile);
