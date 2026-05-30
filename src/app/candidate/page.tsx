@@ -10,11 +10,24 @@ import * as RechartsPrimitive from "recharts";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { toast } from "sonner";
 
-function formatFeedbackText(text: string) {
+function formatFeedbackText(text: string, companyName?: string) {
   if (!text) return "";
   
+  const targetCompany = companyName || "Razorpay";
+  
+  // Clean placeholders dynamically
+  let cleanedText = text;
+  cleanedText = cleanedText.replace(/\[Your Name\/Company Name\]/gi, `The ${targetCompany} Recruiting Team`);
+  cleanedText = cleanedText.replace(/\[Your Name \/ Company Name\]/gi, `The ${targetCompany} Recruiting Team`);
+  cleanedText = cleanedText.replace(/\[Company Name\]/gi, targetCompany);
+  cleanedText = cleanedText.replace(/\[Your Name\]/gi, `The ${targetCompany} Recruiting Team`);
+  cleanedText = cleanedText.replace(/\[Your Title\/Role\]/gi, "Recruiting Team");
+  cleanedText = cleanedText.replace(/\[Your Title \/ Role\]/gi, "Recruiting Team");
+  cleanedText = cleanedText.replace(/XYZ Company/gi, targetCompany);
+  cleanedText = cleanedText.replace(/\[XYZ Company\]/gi, targetCompany);
+  
   // Split by markdown bold markers (**text**) and render them as strong/span tags with highlighted golden styles!
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  const parts = cleanedText.split(/(\*\*[^*]+\*\*)/g);
   return parts.map((part, index) => {
     if (part.startsWith("**") && part.endsWith("**")) {
       const cleanText = part.slice(2, -2);
@@ -681,7 +694,7 @@ export default function CandidateDashboard() {
                             
                             {openFeedbackAppId === app.id && (
                               <div className="mt-3 rounded-lg bg-[#13151f]/85 p-3.5 border border-border/40 max-h-56 overflow-y-auto text-xs sm:text-[13px] leading-relaxed text-white/95 whitespace-pre-line font-medium animate-in slide-in-from-top-2 duration-300 scrollbar-thin scrollbar-thumb-brand/20">
-                                {formatFeedbackText(app.rejection_feedback)}
+                                {formatFeedbackText(app.rejection_feedback, app.jobs?.company)}
                               </div>
                             )}
                           </>
@@ -692,6 +705,130 @@ export default function CandidateDashboard() {
                             </span>
                           </p>
                         )}
+                      </div>
+                    )}
+
+                    {/* Celebratory card for Hired stage */}
+                    {stage === "hired" && (
+                      <div className="mt-5 space-y-4 animate-in fade-in duration-300 relative z-10 text-left">
+                        {/* Celebrate Banner */}
+                        <div className="rounded-xl border border-success/30 bg-success/5 p-4">
+                          <div className="flex items-center gap-2 text-xs font-black text-success mb-2 uppercase tracking-wider animate-pulse">
+                            🎉 Offer & Onboarding Active
+                          </div>
+                          <p className="text-[11px] leading-relaxed text-muted-foreground font-semibold">
+                            Congratulations! You cleared all communication and technical speech signal rounds with an impressive AI rating. Check your registered inbox (<span className="text-white">{profile?.email || "email"}</span>) for your formal offer details and official team onboarding steps!
+                          </p>
+                        </div>
+
+                        {/* Interactive Checklist & Portal to fill height beautifully */}
+                        <div className="rounded-xl border border-border/80 bg-[#13151f]/85 p-4 space-y-3.5">
+                          <div className="text-[10px] uppercase tracking-wider font-extrabold text-muted-foreground">
+                            Onboarding Checklist
+                          </div>
+                          
+                          <div className="space-y-2.5">
+                            <div className="flex items-center justify-between text-[11px] font-bold text-success/90">
+                              <span className="flex items-center gap-2">
+                                <span className="grid h-4 w-4 place-items-center rounded-full bg-success text-white text-[8px] font-black">✓</span>
+                                Vouch AI Signal Verified
+                              </span>
+                              <span className="font-mono text-[10px] text-brand">Grade: Certified</span>
+                            </div>
+
+                            <div className="flex items-center justify-between text-[11px] font-bold text-success/90">
+                              <span className="flex items-center gap-2">
+                                <span className="grid h-4 w-4 place-items-center rounded-full bg-success text-white text-[8px] font-black">✓</span>
+                                Technical Pitch Accepted
+                              </span>
+                              <span className="font-mono text-[10px] text-brand">Pace: {videoResume?.speaking_pace || 135} WPM</span>
+                            </div>
+
+                            <div className="flex items-center justify-between text-[11px] font-bold text-white/95">
+                              <span className="flex items-center gap-2 animate-pulse">
+                                <span className="w-4 h-4 border border-brand border-t-transparent rounded-full animate-spin shrink-0" />
+                                Onboarding Kit Delivery
+                              </span>
+                              <span className="font-mono text-[10px] text-brand uppercase tracking-wider">In Progress</span>
+                            </div>
+
+                            <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
+                              <span className="flex items-center gap-2">
+                                <span className="w-4 h-4 border border-border rounded-full shrink-0 bg-card" />
+                                Credentials & NDA Sign-off
+                              </span>
+                              <span className="font-mono text-[10px] uppercase tracking-wider">Pending HR</span>
+                            </div>
+                          </div>
+
+                          {/* Extra Premium Badge download button! */}
+                          <div className="border-t border-border/40 pt-3 mt-3 flex items-center justify-between gap-2">
+                            <div className="flex flex-col">
+                              <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-extrabold">Talent Status</span>
+                              <span className="text-[10px] text-white font-bold uppercase tracking-wider mt-0.5">Vouch Elite Certified</span>
+                            </div>
+                            <button
+                              onClick={() => {
+                                toast.success("Elite Candidate certificate link sent to your registered inbox!");
+                              }}
+                              className="rounded-lg bg-brand px-3 py-1.5 text-[9px] font-black text-brand-foreground hover:brightness-110 transition uppercase tracking-wider shadow-sm shadow-brand/10"
+                            >
+                              Get Certificate
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Proactive helper card for In Progress stages */}
+                    {stage !== "hired" && !isRejected && (
+                      <div className="mt-5 space-y-4 animate-in fade-in duration-300 relative z-10 text-left">
+                        {/* Tip Banner */}
+                        <div className="rounded-xl border border-brand/20 bg-brand/5 p-4">
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-brand mb-2 uppercase tracking-wider">
+                            💡 AI Success Tip
+                          </div>
+                          <p className="text-[11px] leading-relaxed text-muted-foreground font-semibold">
+                            {stage === "interview" ? (
+                              <span>You have an interview session scheduled! Prep now by trying our conversational <Link href="/candidate/mock-interview/frontend" className="text-brand font-black underline">AI Mock Interviewer</Link> to practice answering core technical questions under clock pressure.</span>
+                            ) : (
+                              <span>Recruiters are currently reviewing your Vouch visual scorecards and on-camera confidence levels. Boost your credentials by taking timed <Link href="/candidate/assessment" className="text-brand font-black underline">MCQ Skill Assessments</Link>!</span>
+                            )}
+                          </p>
+                        </div>
+
+                        {/* Interactive Prep Checklist */}
+                        <div className="rounded-xl border border-border/80 bg-[#13151f]/85 p-4 space-y-3.5">
+                          <div className="text-[10px] uppercase tracking-wider font-extrabold text-muted-foreground">
+                            Candidate Assessment Blueprint
+                          </div>
+
+                          <div className="space-y-2.5">
+                            <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
+                              <span className="flex items-center gap-2">
+                                <span className="grid h-4 w-4 place-items-center rounded-full bg-brand text-brand-foreground text-[8px] font-black">1</span>
+                                Try Live MCQ Assessment
+                              </span>
+                              <Link href="/candidate/assessment" className="text-[10px] text-brand font-bold underline uppercase">Start</Link>
+                            </div>
+
+                            <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
+                              <span className="flex items-center gap-2">
+                                <span className="grid h-4 w-4 place-items-center rounded-full bg-brand text-brand-foreground text-[8px] font-black">2</span>
+                                Practice Mock Interview
+                              </span>
+                              <Link href="/candidate/mock-interview/frontend" className="text-[10px] text-brand font-bold underline uppercase">Launch AI</Link>
+                            </div>
+
+                            <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
+                              <span className="flex items-center gap-2">
+                                <span className="grid h-4 w-4 place-items-center rounded-full bg-brand text-brand-foreground text-[8px] font-black">3</span>
+                                Optimize Voice Pace & Clarity
+                              </span>
+                              <span className="text-[10px] text-muted-foreground font-mono font-bold">120-150 WPM</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>

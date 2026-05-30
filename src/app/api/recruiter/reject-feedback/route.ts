@@ -26,11 +26,12 @@ export async function POST(request: NextRequest) {
     // 2. Fetch the job details
     const { data: job } = await supabaseAdmin
       .from('jobs')
-      .select('title')
+      .select('title, company')
       .eq('id', app.job_id)
       .maybeSingle()
 
     const jobTitle = job?.title || 'Frontend Developer'
+    const companyName = job?.company || 'Razorpay'
     const candidateName = app.profiles?.full_name || 'Candidate'
     const scores = app.video_resumes || {}
     const transcript = scores.transcript || ''
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
     // 3. Construct Gemini Prompt
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
     const prompt = `You are a warm, extremely supportive, and constructive technical recruiter.
-Write a personalized rejection email / constructive feedback letter for an applicant named "${candidateName}" who applied for the "${jobTitle}" position.
+Write a personalized rejection email / constructive feedback letter for an applicant named "${candidateName}" who applied for the "${jobTitle}" position at "${companyName}".
 
 Here are the applicant's metrics from our AI assessment:
 - Overall Score: ${scores.overall_score || 70}/100
@@ -54,13 +55,19 @@ Write a polite and empathetic rejection message. Your goals:
 1. Express deep gratitude for their effort and application.
 2. Emphasize 1 or 2 specific strengths (e.g. they showed great on-camera confidence or very clear communication skills based on their scores/transcript).
 3. Provide 2-3 specific, actionable, and constructive tips to help them grow and succeed in their next application. Keep them positive and highly practical.
-4. Conclude with a warm, encouraging closing, wishing them the absolute best in their career journey.
+4. Conclude with a warm, encouraging closing signing off explicitly as "The ${companyName} Recruiting Team", wishing them the absolute best in their career journey.
 
 Make the tone highly professional, encouraging, human, and conversational (avoid robotic or overly corporate phrasing).
-Do NOT include subjects, standard header templates, or placeholders like "[Your Name]". Write it as a clean, complete message that can be directly read by the candidate on their dashboard.`
+Do NOT include subjects, standard header templates, or placeholders like "[Your Name]" or "[Your Name/Company Name]". Write it as a clean, complete message that can be directly read by the candidate on their dashboard.`
 
     const result = await model.generateContent(prompt)
-    const feedback = result.response.text().trim()
+    let feedback = result.response.text().trim()
+
+    // Safety check: replace any bracketed placeholders in case the LLM ignored the instructions
+    feedback = feedback.replace(/\[Your Name\/Company Name\]/gi, `The ${companyName} Team`)
+    feedback = feedback.replace(/\[Company Name\]/gi, companyName)
+    feedback = feedback.replace(/\[Your Name\]/gi, `The ${companyName} Recruiting Team`)
+    feedback = feedback.replace(/\[Your Title\/Role\]/gi, "Recruiting Team")
 
     // 4. Save feedback in applications table and mark stage as rejected
     const { error: updateErr } = await supabaseAdmin

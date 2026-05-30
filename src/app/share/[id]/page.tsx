@@ -3,6 +3,8 @@ import { Brain, Star, CheckCircle, Video, Play, Sparkles, Award } from "lucide-r
 import { Navbar } from "@/components/Navbar";
 import Link from "next/link";
 import SharePageClient from "./SharePageClient";
+import PublicTalentPass from "./PublicTalentPass";
+
 
 interface SharePageProps {
   params: {
@@ -178,25 +180,8 @@ export default async function PublicSharePage({ params }: SharePageProps) {
           {/* Right Column: Score Breakdown */}
           <div className="md:col-span-5 space-y-6">
             
-            {/* Score Wheel Box */}
-            <div className="rounded-[18px] border border-border bg-panel p-6 shadow-xl text-center relative overflow-hidden flex flex-col items-center">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-brand/2 rounded-full blur-2xl pointer-events-none" />
-              <div className="text-xs uppercase tracking-[0.25em] text-muted-foreground font-extrabold mb-5">AI Vouch Score</div>
-              
-              <div className="relative flex items-center justify-center w-36 h-36">
-                {/* Visual score circle glow */}
-                <div className="absolute inset-0 rounded-full border-4 border-card" />
-                <div className="absolute inset-0 rounded-full border-4 border-brand border-t-transparent animate-spin-slow opacity-25" />
-                <div className="text-center relative z-10">
-                  <div className="font-heading text-5xl font-black text-white">{resume.overall_score || 82}</div>
-                  <div className="text-[10px] font-bold text-brand uppercase tracking-widest mt-1">Score Card</div>
-                </div>
-              </div>
-
-              <div className="mt-6 flex items-center gap-2 rounded-full bg-brand/10 px-4 py-1 text-[11px] font-bold text-brand border border-brand/20">
-                <Award className="h-4 w-4" /> Top {resume.overall_score >= 85 ? "5%" : "15%"} Candidate
-              </div>
-            </div>
+            {/* Vouch AI Smart Talent Pass (Both in One!) */}
+            <PublicTalentPass videoResume={resume} profile={profile} />
 
             {/* Progression bars */}
             <div className="rounded-[18px] border border-border bg-panel p-6 shadow-xl space-y-5">
