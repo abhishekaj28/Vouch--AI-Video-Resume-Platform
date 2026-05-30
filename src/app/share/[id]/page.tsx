@@ -11,7 +11,7 @@ interface SharePageProps {
 }
 
 export default async function PublicSharePage({ params }: SharePageProps) {
-  const { id } = params;
+  const { id } = await params;
 
   // 1. Fetch public profile and video resume details
   const { data: resume, error } = await supabaseAdmin

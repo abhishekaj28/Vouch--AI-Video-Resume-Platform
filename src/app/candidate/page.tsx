@@ -10,6 +10,24 @@ import * as RechartsPrimitive from "recharts";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { toast } from "sonner";
 
+function formatFeedbackText(text: string) {
+  if (!text) return "";
+  
+  // Split by markdown bold markers (**text**) and render them as strong/span tags with highlighted golden styles!
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      const cleanText = part.slice(2, -2);
+      return (
+        <strong key={index} className="text-brand font-black underline decoration-brand/35 underline-offset-4">
+          {cleanText}
+        </strong>
+      );
+    }
+    return part;
+  });
+}
+
 function ScoreRing({ value, color, label }: { value: number; color: string; label: string }) {
   const r = 36;
   const c = 2 * Math.PI * r;
@@ -662,8 +680,8 @@ export default function CandidateDashboard() {
                             </button>
                             
                             {openFeedbackAppId === app.id && (
-                              <div className="mt-3 rounded-lg bg-[#13151f]/85 p-3.5 border border-border/40 max-h-56 overflow-y-auto text-[10.5px] leading-relaxed text-muted-foreground whitespace-pre-line font-medium animate-in slide-in-from-top-2 duration-300 scrollbar-thin scrollbar-thumb-brand/20">
-                                {app.rejection_feedback}
+                              <div className="mt-3 rounded-lg bg-[#13151f]/85 p-3.5 border border-border/40 max-h-56 overflow-y-auto text-xs sm:text-[13px] leading-relaxed text-white/95 whitespace-pre-line font-medium animate-in slide-in-from-top-2 duration-300 scrollbar-thin scrollbar-thumb-brand/20">
+                                {formatFeedbackText(app.rejection_feedback)}
                               </div>
                             )}
                           </>
