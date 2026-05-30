@@ -95,7 +95,13 @@ export default function AuthPage() {
           router.push("/candidate");
         }
       } else {
-        const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            redirectTo: `${window.location.origin}/auth?confirmed=true`
+          }
+        });
         if (signUpError) {
           setError(signUpError.message);
           setLoading(false);
