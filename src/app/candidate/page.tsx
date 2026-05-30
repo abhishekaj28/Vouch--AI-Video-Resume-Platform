@@ -57,6 +57,7 @@ export default function CandidateDashboard() {
   const [assessments, setAssessments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPassModalOpen, setIsPassModalOpen] = useState(false);
+  const [openFeedbackAppId, setOpenFeedbackAppId] = useState<string | null>(null);
   const [selectedJob, setSelectedJob] = useState<any | null>(null);
   const [applying, setApplying] = useState(false);
   const [jobSearch, setJobSearch] = useState("");
@@ -643,19 +644,36 @@ export default function CandidateDashboard() {
                       </div>
                     )}
                     {isRejected && (
-                      <div className="mt-4 rounded-xl border border-error/25 bg-error/5 p-4 animate-in fade-in duration-300 relative z-10">
+                      <div className="mt-4 rounded-xl border border-error/25 bg-error/5 p-4 animate-in fade-in duration-300 relative z-10 text-left">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-error mb-2">
                           <Brain className="h-4 w-4 text-error shrink-0" /> AI Growth & Constructive Feedback
                         </div>
-                        <p className="text-[11px] leading-relaxed text-muted-foreground whitespace-pre-line font-medium">
-                          {app.rejection_feedback ? (
-                            app.rejection_feedback
-                          ) : (
+                        
+                        {app.rejection_feedback ? (
+                          <>
+                            <p className="text-[11px] leading-relaxed text-muted-foreground font-semibold">
+                              Thank you for taking the time to complete our AI assessment. Vouch AI has compiled a comprehensive growth report based on your speech signals and presentation metrics to help you succeed next time!
+                            </p>
+                            <button
+                              onClick={() => setOpenFeedbackAppId(openFeedbackAppId === app.id ? null : app.id)}
+                              className="mt-3.5 inline-flex items-center gap-1.5 rounded-lg border border-brand/40 bg-brand/5 px-3 py-1.5 text-[10px] font-black text-brand uppercase tracking-wider hover:bg-brand hover:text-brand-foreground transition"
+                            >
+                              {openFeedbackAppId === app.id ? "✕ Hide Growth Feedback" : "📝 Read AI Growth Report"}
+                            </button>
+                            
+                            {openFeedbackAppId === app.id && (
+                              <div className="mt-3 rounded-lg bg-[#13151f]/85 p-3.5 border border-border/40 max-h-56 overflow-y-auto text-[10.5px] leading-relaxed text-muted-foreground whitespace-pre-line font-medium animate-in slide-in-from-top-2 duration-300 scrollbar-thin scrollbar-thumb-brand/20">
+                                {app.rejection_feedback}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-[11px] leading-relaxed text-muted-foreground whitespace-pre-line font-medium">
                             <span className="flex items-center gap-2 text-brand">
                               <RefreshCw className="h-3 w-3 animate-spin shrink-0 text-brand" /> Analyzing communications signal to generate constructive AI growth feedback...
                             </span>
-                          )}
-                        </p>
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>
