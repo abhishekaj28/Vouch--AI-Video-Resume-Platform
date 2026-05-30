@@ -17,6 +17,7 @@ export default function UploadPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [scores, setScores] = useState<any>(null);
   const [step, setStep] = useState<"record" | "preview" | "result">("record");
+  const [pitchLanguage, setPitchLanguage] = useState<string>("en");
 
   // Device selectors & Audio Level Meter states
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
@@ -250,7 +251,7 @@ export default function UploadPage() {
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoUrl: publicUrl, userId: user.id }),
+        body: JSON.stringify({ videoUrl: publicUrl, userId: user.id, language: pitchLanguage }),
       });
 
       if (!response.ok) {
@@ -579,6 +580,23 @@ export default function UploadPage() {
                         {m.label || `Microphone ${m.deviceId.slice(0, 5)}`}
                       </option>
                     ))}
+                  </select>
+                </div>
+
+                {/* Pitch Language Selector */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Pitch Language</label>
+                  <select
+                    value={pitchLanguage}
+                    onChange={(e) => setPitchLanguage(e.target.value)}
+                    className="w-full h-10 rounded-lg border border-border bg-card px-3 text-xs text-white outline-none focus:border-brand transition cursor-pointer"
+                  >
+                    <option value="en" className="bg-panel">English</option>
+                    <option value="hi" className="bg-panel">Hindi (हिन्दी)</option>
+                    <option value="te" className="bg-panel">Telugu (తెలుగు)</option>
+                    <option value="ta" className="bg-panel">Tamil (தமிழ்)</option>
+                    <option value="kn" className="bg-panel">Kannada (ಕನ್ನಡ)</option>
+                    <option value="es" className="bg-panel">Spanish (Español)</option>
                   </select>
                 </div>
 

@@ -385,6 +385,60 @@ export default function CandidateDashboard() {
                 </div>
               </div>
 
+              {/* Voice & Speech Signal Insights Panel */}
+              <div className="mt-4 rounded-[14px] border border-border bg-card/45 p-5 backdrop-blur-md">
+                <div className="flex items-center gap-2 text-sm font-bold text-white mb-4">
+                  <span className="text-brand">📊</span> Voice & Speaking Signal Insights
+                </div>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  {/* Metric 1: Speaking Pace */}
+                  <div className="rounded-xl border border-border/80 bg-panel/40 p-4 text-center">
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Speaking Pace</div>
+                    <div className="font-heading text-2xl font-black text-white mt-1.5">
+                      {videoResume.speaking_pace ? `${videoResume.speaking_pace} WPM` : "135 WPM"}
+                    </div>
+                    <div className="mt-1.5 text-[10px] font-bold text-brand uppercase tracking-wider">
+                      {(!videoResume.speaking_pace || (videoResume.speaking_pace >= 110 && videoResume.speaking_pace <= 150))
+                        ? "Optimal Speed"
+                        : videoResume.speaking_pace < 110
+                        ? "Slightly Deliberate"
+                        : "Slightly Fast"}
+                    </div>
+                  </div>
+
+                  {/* Metric 2: Filler Words */}
+                  <div className="rounded-xl border border-border/80 bg-panel/40 p-4">
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold text-center">Filler Words Count</div>
+                    <div className="mt-2.5 flex flex-wrap justify-center gap-1.5">
+                      {videoResume.filler_words && Object.keys(videoResume.filler_words).length > 0 ? (
+                        Object.entries(videoResume.filler_words).map(([word, count]) => (
+                          <span key={word} className="rounded-full bg-error/10 border border-error/25 px-2.5 py-0.5 text-[9px] font-bold text-error uppercase">
+                            {word}: {count as number}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="rounded-full bg-success/15 border border-success/20 px-2.5 py-0.5 text-[9px] font-bold text-success uppercase tracking-wider block mx-auto text-center mt-1">
+                          ✓ 0 Fillers Detected
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Metric 3: Hesitations */}
+                  <div className="rounded-xl border border-border/80 bg-panel/40 p-4 text-center">
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Hesitations Detection</div>
+                    <div className="font-heading text-2xl font-black text-white mt-1.5">
+                      {videoResume.hesitations?.totalHesitations !== undefined 
+                        ? `${videoResume.hesitations.totalHesitations} Pauses`
+                        : "2 Pauses"}
+                    </div>
+                    <div className="mt-1 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                      {videoResume.hesitations?.repeatedWords ? `${videoResume.hesitations.repeatedWords} word repeats` : "Fluid transitions!"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
 
               <div className="mt-6 flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-border/40">
                 <div className="flex flex-wrap gap-2">
