@@ -138,6 +138,39 @@ export default function CandidateDashboard() {
     getData();
   }, [router]);
 
+  // Self-healing check: automatically trigger AI rejection feedback generation if an application is marked rejected but has no feedback yet
+  useEffect(() => {
+    if (loading || applications.length === 0) return;
+    
+    const pendingFeedbackApps = applications.filter(
+      (app) => app.stage === "rejected" && !app.rejection_feedback
+    );
+
+    if (pendingFeedbackApps.length > 0) {
+      pendingFeedbackApps.forEach((app) => {
+        fetch("/api/recruiter/reject-feedback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ applicationId: app.id }),
+        })
+          .then((res) => {
+            if (res.ok) return res.json();
+            throw new Error("Feedback generation failed");
+          })
+          .then((data) => {
+            if (data && data.feedback) {
+              setApplications((prev) =>
+                prev.map((a) =>
+                  a.id === app.id ? { ...a, rejection_feedback: data.feedback } : a
+                )
+              );
+            }
+          })
+          .catch((err) => console.warn("Auto-generation of reject feedback failed:", err));
+      });
+    }
+  }, [applications, loading]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -608,7 +641,13 @@ export default function CandidateDashboard() {
                           <Brain className="h-4 w-4 text-error shrink-0" /> AI Growth & Constructive Feedback
                         </div>
                         <p className="text-[11px] leading-relaxed text-muted-foreground whitespace-pre-line font-medium">
-                          {app.rejection_feedback || "Rejection constructive feedback is pending AI analysis."}
+                          {app.rejection_feedback ? (
+                            app.rejection_feedback
+                          ) : (
+                            <span className="flex items-center gap-2 text-brand">
+                              <RefreshCw className="h-3 w-3 animate-spin shrink-0 text-brand" /> Analyzing communications signal to generate constructive AI growth feedback...
+                            </span>
+                          )}
                         </p>
                       </div>
                     )}
