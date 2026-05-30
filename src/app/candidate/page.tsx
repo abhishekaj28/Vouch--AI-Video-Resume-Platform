@@ -574,20 +574,10 @@ export default function CandidateDashboard() {
                 </div>
                 <div className="flex flex-wrap gap-2.5">
                   <button
-                    onClick={() => {
-                      const shareUrl = window.location.origin + "/share/" + videoResume.id;
-                      navigator.clipboard.writeText(shareUrl);
-                      toast.success("Public portfolio share link copied to clipboard!");
-                    }}
+                    onClick={() => setIsPassModalOpen(true)}
                     className="inline-flex h-10 items-center gap-2 rounded-lg bg-brand px-4 text-sm font-bold text-brand-foreground hover:brightness-110 transition duration-200 shadow-md shadow-brand/20"
                   >
                     <Share2 className="h-4 w-4" /> Share Portfolio
-                  </button>
-                  <button
-                    onClick={() => setIsPassModalOpen(true)}
-                    className="inline-flex h-10 items-center gap-2 rounded-lg border border-brand/40 bg-brand/5 px-4 text-sm font-bold text-brand hover:bg-brand hover:text-brand-foreground transition duration-200"
-                  >
-                    <Award className="h-4 w-4" /> View AI ID Card
                   </button>
                   <Link
                     href="/candidate/upload"
@@ -1204,11 +1194,29 @@ export default function CandidateDashboard() {
             <div className="flex justify-center my-6" style={{ perspective: "1000px" }}>
               <div 
                 id="talent-pass-card"
-                className="w-80 h-[480px] rounded-[24px] border border-brand bg-gradient-to-b from-[#181a25] to-[#0d0e14] p-5 shadow-[0_0_40px_rgba(245,197,24,0.18)] relative overflow-hidden transition-all duration-500 transform hover:rotate-y-12 hover:rotate-x-12 hover:scale-[1.02] transform-style-3d cursor-pointer group"
+                className="w-80 h-[480px] rounded-[24px] border-2 border-brand/85 bg-gradient-to-b from-[#1c1d2e] via-[#10111a] to-[#06070a] p-5 shadow-[0_0_50px_rgba(245,197,24,0.22)] relative overflow-hidden transition-all duration-500 transform hover:rotate-y-12 hover:rotate-x-12 hover:scale-[1.02] transform-style-3d cursor-pointer group"
               >
-                {/* Holographic background shines */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-brand/5 rounded-full blur-[60px]" />
-                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-500/5 rounded-full blur-[60px]" />
+                {/* Tech Dot-Grid Vector Pattern Background Overlay */}
+                <div 
+                  className="absolute inset-0 opacity-[0.08] pointer-events-none"
+                  style={{
+                    backgroundImage: "radial-gradient(#f5c518 1px, transparent 1px)",
+                    backgroundSize: "16px 16px"
+                  }}
+                />
+
+                {/* Sweeping diagonal glass shimmer reflection */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.03] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
+
+                {/* Tech corner accents (VIP Token Styling) */}
+                <div className="absolute top-3 left-3 w-3 h-3 border-t border-l border-brand/50 pointer-events-none" />
+                <div className="absolute top-3 right-3 w-3 h-3 border-t border-r border-brand/50 pointer-events-none" />
+                <div className="absolute bottom-3 left-3 w-3 h-3 border-b border-l border-brand/50 pointer-events-none" />
+                <div className="absolute bottom-3 right-3 w-3 h-3 border-b border-r border-brand/50 pointer-events-none" />
+
+                {/* Holographic background glows */}
+                <div className="absolute -top-10 -right-10 w-44 h-44 bg-brand/10 rounded-full blur-[80px] animate-pulse duration-[8000ms] pointer-events-none" />
+                <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-blue-500/10 rounded-full blur-[80px] animate-pulse duration-[6000ms] pointer-events-none" />
                 
                 {/* Header branding */}
                 <div className="flex items-center justify-between border-b border-border/40 pb-4">
@@ -1300,21 +1308,53 @@ export default function CandidateDashboard() {
 
                     // 1. Draw premium dark gradient background
                     const grad = ctx.createLinearGradient(0, 0, 0, 1200);
-                    grad.addColorStop(0, "#181a25");
-                    grad.addColorStop(1, "#0d0e14");
+                    grad.addColorStop(0, "#1c1d2e");
+                    grad.addColorStop(0.5, "#10111a");
+                    grad.addColorStop(1, "#06070a");
                     ctx.fillStyle = grad;
                     ctx.fillRect(0, 0, 800, 1200);
 
-                    // 2. Draw thick outer gold border
+                    // 2. Draw gorgeous glow orbs on Canvas
+                    // Top Right Amber Glow
+                    const topGlow = ctx.createRadialGradient(700, 100, 50, 700, 100, 400);
+                    topGlow.addColorStop(0, "rgba(245, 197, 24, 0.12)");
+                    topGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+                    ctx.fillStyle = topGlow;
+                    ctx.fillRect(0, 0, 800, 1200);
+
+                    // Bottom Left Blue Glow
+                    const bottomGlow = ctx.createRadialGradient(100, 1100, 50, 100, 1100, 400);
+                    bottomGlow.addColorStop(0, "rgba(59, 130, 246, 0.12)");
+                    bottomGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+                    ctx.fillStyle = bottomGlow;
+                    ctx.fillRect(0, 0, 800, 1200);
+
+                    // 3. Draw high-tech Dot-Grid pattern on Canvas
+                    ctx.fillStyle = "rgba(245, 197, 24, 0.08)";
+                    for (let x = 30; x < 770; x += 32) {
+                      for (let y = 30; y < 1170; y += 32) {
+                        ctx.beginPath();
+                        ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+                        ctx.fill();
+                      }
+                    }
+
+                    // 4. Draw high-tech corner L-accents on Canvas
+                    ctx.strokeStyle = "rgba(245, 197, 24, 0.5)";
+                    ctx.lineWidth = 4;
+                    // Top Left Corner
+                    ctx.beginPath(); ctx.moveTo(40, 70); ctx.lineTo(40, 40); ctx.lineTo(70, 40); ctx.stroke();
+                    // Top Right Corner
+                    ctx.beginPath(); ctx.moveTo(760, 70); ctx.lineTo(760, 40); ctx.lineTo(730, 40); ctx.stroke();
+                    // Bottom Left Corner
+                    ctx.beginPath(); ctx.moveTo(40, 1130); ctx.lineTo(40, 1160); ctx.lineTo(70, 1160); ctx.stroke();
+                    // Bottom Right Corner
+                    ctx.beginPath(); ctx.moveTo(760, 1130); ctx.lineTo(760, 1160); ctx.lineTo(730, 1160); ctx.stroke();
+
+                    // 5. Draw thick outer gold border
                     ctx.strokeStyle = "#f5c518";
                     ctx.lineWidth = 20;
                     ctx.strokeRect(10, 10, 780, 1180);
-
-                    // 3. Draw watermarked accent circles
-                    ctx.fillStyle = "rgba(245, 197, 24, 0.03)";
-                    ctx.beginPath();
-                    ctx.arc(800, 0, 300, 0, Math.PI * 2);
-                    ctx.fill();
 
                     // 4. Branding Header
                     ctx.fillStyle = "#f5c518";
