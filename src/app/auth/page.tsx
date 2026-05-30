@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Video, Zap, Target, Bot, User, Building2 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { supabase } from "@/lib/supabase";
@@ -52,7 +52,7 @@ export default function AuthPage() {
   const [checkEmail, setCheckEmail] = useState(false);
   const router = useRouter();
 
-  useState(() => {
+  useEffect(() => {
     // Check for email confirmation redirect
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -67,7 +67,7 @@ export default function AuthPage() {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
-  });
+  }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,7 +99,7 @@ export default function AuthPage() {
           email,
           password,
           options: {
-            redirectTo: `${window.location.origin}/auth?confirmed=true`
+            emailRedirectTo: `${window.location.origin}/auth?confirmed=true`
           }
         });
         if (signUpError) {
