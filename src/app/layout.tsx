@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Preloader } from "@/components/Preloader";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Vouch - AI Video Resume Platform",
@@ -15,6 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased dark">
       <body className="min-h-full flex flex-col relative">
+        {/* Toast Notifications */}
+        <Toaster closeButton richColors position="top-right" />
+
         {/* Splash Preloader */}
         <Preloader />
 

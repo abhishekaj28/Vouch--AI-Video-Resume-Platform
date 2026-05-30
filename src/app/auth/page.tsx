@@ -5,6 +5,7 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Video, Zap, Target, Bot, 
 import { Logo } from "@/components/Logo";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 function GoogleIcon() {
   return (
@@ -48,7 +49,25 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [error, setError] = useState("");
+  const [checkEmail, setCheckEmail] = useState(false);
   const router = useRouter();
+
+  useState(() => {
+    // Check for email confirmation redirect
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("confirmed") === "true" || params.get("verified") === "true") {
+        // Trigger verification success toast
+        setTimeout(() => {
+          toast.success("Email verified successfully! Please log in to activate your account.", {
+            duration: 8000,
+          });
+        }, 500);
+        // Clean URL query parameters to keep address bar clean
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  });
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,11 +122,8 @@ export default function AuthPage() {
             return;
           }
 
-          if (role === "recruiter") {
-            router.push("/recruiter");
-          } else {
-            router.push("/candidate");
-          }
+          // Show verify email inbox checklist rather than silent unauthenticated redirect
+          setCheckEmail(true);
         }
       }
     } catch (err: any) {
@@ -164,158 +180,192 @@ export default function AuthPage() {
       <section className="flex min-h-screen flex-col bg-background px-5 py-10 sm:px-8 lg:px-12 xl:px-20">
         <div className="mb-8 lg:hidden"><Logo /></div>
         <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
-          <header>
-            <h2 className="font-heading text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              {mode === "login" ? "Welcome back" : "Get started free"}
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {mode === "login" ? "Sign in to your Vouch dashboard" : "Create your account in 30 seconds"}
-            </p>
-          </header>
-
-          <div className="mt-8 grid grid-cols-2 gap-3">
-            <button type="button" className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-border bg-card text-sm font-medium text-white transition-all hover:border-white/20">
-              <GoogleIcon /> Google
-            </button>
-            <button type="button" className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-border bg-card text-sm font-medium text-white transition-all hover:border-[#3B82F6]/50">
-              <LinkedInIcon /> LinkedIn
-            </button>
-          </div>
-
-          <div className="my-6 flex items-center gap-4">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-xs uppercase tracking-wider text-muted-foreground">or continue with email</span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
-
-          <form onSubmit={handleAuth} className="space-y-4">
-            {error && (
-              <div className="p-3 rounded-lg text-sm bg-destructive/15 border border-destructive text-destructive">
-                {error}
+          {checkEmail ? (
+            <div className="text-center py-10 animate-in fade-in duration-300">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand/10 text-brand shadow-[0_0_40px_rgba(245,197,24,0.15)]">
+                <Mail className="h-8 w-8 animate-pulse text-brand" />
               </div>
-            )}
-
-            {mode === "signup" && (
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-white/90">Full name</label>
-                <input
-                  required
-                  type="text"
-                  placeholder="Jane Doe"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="h-11 w-full rounded-lg border border-border bg-card px-3.5 text-sm text-white placeholder:text-muted-foreground outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(245,197,24,0.18)]"
-                />
-              </div>
-            )}
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-white/90">Email</label>
-              <div className="group relative">
-                <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground group-focus-within:text-brand" />
-                <input
-                  type="email"
-                  required
-                  placeholder="name@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-11 w-full rounded-lg border border-border bg-card pl-10 pr-3 text-sm text-white placeholder:text-muted-foreground outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(245,197,24,0.18)]"
-                />
-              </div>
+              <h2 className="mt-6 text-3xl font-bold text-white font-heading">Check your inbox</h2>
+              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                We've sent a verification link to <strong className="text-white">{email}</strong>.
+              </p>
+              <p className="mt-2.5 text-xs text-muted-foreground/80 max-w-xs mx-auto">
+                Please click the link in the email to activate and verify your Vouch account before logging in.
+              </p>
+              <button
+                onClick={() => {
+                  setCheckEmail(false);
+                  setMode("login");
+                }}
+                className="mt-8 inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand text-sm font-semibold text-brand-foreground transition-all hover:brightness-105 hover:shadow-[0_4px_20px_rgba(245,197,24,0.35)]"
+              >
+                Back to Sign In
+              </button>
             </div>
-            <div>
-              <div className="mb-1.5 flex items-center justify-between">
-                <label className="block text-sm font-medium text-white/90">Password</label>
-                {mode === "login" && <a href="#" className="text-sm font-medium text-brand hover:underline">Forgot password?</a>}
-              </div>
-              <div className="group relative">
-                <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground group-focus-within:text-brand" />
-                <input
-                  type={showPw ? "text" : "password"}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={mode === "signup" ? "At least 8 characters" : "Enter your password"}
-                  className="h-11 w-full rounded-lg border border-border bg-card pl-10 pr-11 text-sm text-white placeholder:text-muted-foreground outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(245,197,24,0.18)]"
-                />
-                <button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-md text-muted-foreground hover:bg-white/5 hover:text-white">
-                  {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          ) : (
+            <>
+              <header>
+                <h2 className="font-heading text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                  {mode === "login" ? "Welcome back" : "Get started free"}
+                </h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {mode === "login" ? "Sign in to your Vouch dashboard" : "Create your account in 30 seconds"}
+                </p>
+              </header>
+
+              <div className="mt-8 grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => toast.info("Social login is coming soon! Please register with your email for now.")}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-border bg-card text-sm font-medium text-white transition-all hover:border-white/20"
+                >
+                  <GoogleIcon /> Google
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toast.info("Social login is coming soon! Please register with your email for now.")}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-border bg-card text-sm font-medium text-white transition-all hover:border-[#3B82F6]/50"
+                >
+                  <LinkedInIcon /> LinkedIn
                 </button>
               </div>
-              {mode === "signup" && (
-                <div className="mt-2 flex gap-1.5">
-                  {[0, 1, 2, 3].map(i => (
-                    <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i < pwStrength ? (pwStrength <= 1 ? "bg-error" : pwStrength <= 2 ? "bg-warning" : "bg-success") : "bg-border"}`} />
-                  ))}
-                </div>
-              )}
-            </div>
 
-            {mode === "signup" && (
-              <div>
-                <label className="mb-2 block text-sm font-medium text-white/90">I'm a...</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { id: "candidate" as const, icon: User, label: "Job Seeker", desc: "Looking for opportunities" },
-                    { id: "recruiter" as const, icon: Building2, label: "Recruiter", desc: "Hiring top talent" },
-                  ].map((r) => (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => setRole(r.id)}
-                      className={`rounded-[14px] border bg-card p-4 text-left transition-all ${role === r.id ? "border-brand shadow-[0_0_0_3px_rgba(245,197,24,0.18)]" : "border-border hover:border-white/20"}`}
-                    >
-                      <r.icon className={`h-5 w-5 ${role === r.id ? "text-brand" : "text-muted-foreground"}`} />
-                      <div className="mt-2 text-sm font-semibold text-white">{r.label}</div>
-                      <div className="text-xs text-muted-foreground">{r.desc}</div>
+              <div className="my-6 flex items-center gap-4">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-xs uppercase tracking-wider text-muted-foreground">or continue with email</span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+
+              <form onSubmit={handleAuth} className="space-y-4">
+                {error && (
+                  <div className="p-3 rounded-lg text-sm bg-destructive/15 border border-destructive text-destructive">
+                    {error}
+                  </div>
+                )}
+
+                {mode === "signup" && (
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-white/90">Full name</label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="Jane Doe"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="h-11 w-full rounded-lg border border-border bg-card px-3.5 text-sm text-white placeholder:text-muted-foreground outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(245,197,24,0.18)]"
+                    />
+                  </div>
+                )}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-white/90">Email</label>
+                  <div className="group relative">
+                    <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground group-focus-within:text-brand" />
+                    <input
+                      type="email"
+                      required
+                      placeholder="name@company.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="h-11 w-full rounded-lg border border-border bg-card pl-10 pr-3 text-sm text-white placeholder:text-muted-foreground outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(245,197,24,0.18)]"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <label className="block text-sm font-medium text-white/90">Password</label>
+                    {mode === "login" && <a href="#" className="text-sm font-medium text-brand hover:underline">Forgot password?</a>}
+                  </div>
+                  <div className="group relative">
+                    <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground group-focus-within:text-brand" />
+                    <input
+                      type={showPw ? "text" : "password"}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={mode === "signup" ? "At least 8 characters" : "Enter your password"}
+                      className="h-11 w-full rounded-lg border border-border bg-card pl-10 pr-11 text-sm text-white placeholder:text-muted-foreground outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(245,197,24,0.18)]"
+                    />
+                    <button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-md text-muted-foreground hover:bg-white/5 hover:text-white">
+                      {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
-                  ))}
+                  </div>
+                  {mode === "signup" && (
+                    <div className="mt-2 flex gap-1.5">
+                      {[0, 1, 2, 3].map(i => (
+                        <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i < pwStrength ? (pwStrength <= 1 ? "bg-error" : pwStrength <= 2 ? "bg-warning" : "bg-success") : "bg-border"}`} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {mode === "signup" && (
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-white/90">I'm a...</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { id: "candidate" as const, icon: User, label: "Job Seeker", desc: "Looking for opportunities" },
+                        { id: "recruiter" as const, icon: Building2, label: "Recruiter", desc: "Hiring top talent" },
+                      ].map((r) => (
+                        <button
+                          key={r.id}
+                          type="button"
+                          onClick={() => setRole(r.id)}
+                          className={`rounded-[14px] border bg-card p-4 text-left transition-all ${role === r.id ? "border-brand shadow-[0_0_0_3px_rgba(245,197,24,0.18)]" : "border-border hover:border-white/20"}`}
+                        >
+                          <r.icon className={`h-5 w-5 ${role === r.id ? "text-brand" : "text-muted-foreground"}`} />
+                          <div className="mt-2 text-sm font-semibold text-white">{r.label}</div>
+                          <div className="text-xs text-muted-foreground">{r.desc}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {mode === "login" && (
+                  <label className="flex cursor-pointer items-center gap-2.5 select-none">
+                    <input type="checkbox" defaultChecked className="peer sr-only" />
+                    <span className="grid h-[18px] w-[18px] place-items-center rounded border border-border bg-card transition-all peer-checked:border-brand peer-checked:bg-brand">
+                      <svg viewBox="0 0 16 16" className="h-3 w-3 text-brand-foreground">
+                        <path d="M3 8.5l3 3 7-7" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                    <span className="text-sm text-muted-foreground">Remember me for 30 days</span>
+                  </label>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand text-sm font-semibold text-brand-foreground transition-all hover:brightness-105 hover:shadow-[0_10px_30px_-10px_rgba(245,197,24,0.6)] active:translate-y-px disabled:opacity-50"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Please wait…
+                    </>
+                  ) : (
+                    <>
+                      {mode === "login" ? "Sign in" : "Create Account"}
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    </>
+                  )}
+                </button>
+              </form>
+
+              <p className="mt-6 text-center text-sm text-muted-foreground">
+                {mode === "login" ? "Don't have an account? " : "Already have an account? "}
+                <button onClick={() => setMode(mode === "login" ? "signup" : "login")} className="font-medium text-brand hover:underline">
+                  {mode === "login" ? "Get started free" : "Sign in"}
+                </button>
+              </p>
+
+              <div className="mt-12">
+                <div className="text-center text-xs uppercase tracking-[0.18em] text-muted-foreground">Trusted by top teams</div>
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-x-7 gap-y-3 text-base font-semibold text-white/55">
+                  <span>Razorpay</span><span>Zepto</span><span className="tracking-[0.2em]">CRED</span><span>Groww</span>
                 </div>
               </div>
-            )}
-
-            {mode === "login" && (
-              <label className="flex cursor-pointer items-center gap-2.5 select-none">
-                <input type="checkbox" defaultChecked className="peer sr-only" />
-                <span className="grid h-[18px] w-[18px] place-items-center rounded border border-border bg-card transition-all peer-checked:border-brand peer-checked:bg-brand">
-                  <svg viewBox="0 0 16 16" className="h-3 w-3 text-brand-foreground">
-                    <path d="M3 8.5l3 3 7-7" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-                <span className="text-sm text-muted-foreground">Remember me for 30 days</span>
-              </label>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand text-sm font-semibold text-brand-foreground transition-all hover:brightness-105 hover:shadow-[0_10px_30px_-10px_rgba(245,197,24,0.6)] active:translate-y-px disabled:opacity-50"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Please wait…
-                </>
-              ) : (
-                <>
-                  {mode === "login" ? "Sign in" : "Create Account"}
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </>
-              )}
-            </button>
-          </form>
-
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            {mode === "login" ? "Don't have an account? " : "Already have an account? "}
-            <button onClick={() => setMode(mode === "login" ? "signup" : "login")} className="font-medium text-brand hover:underline">
-              {mode === "login" ? "Get started free" : "Sign in"}
-            </button>
-          </p>
-
-          <div className="mt-12">
-            <div className="text-center text-xs uppercase tracking-[0.18em] text-muted-foreground">Trusted by top teams</div>
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-x-7 gap-y-3 text-base font-semibold text-white/55">
-              <span>Razorpay</span><span>Zepto</span><span className="tracking-[0.2em]">CRED</span><span>Groww</span>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </section>
     </main>

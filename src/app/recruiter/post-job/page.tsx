@@ -31,15 +31,17 @@ export default function PostJobPage() {
         return;
       }
       const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-      if (profile) {
-        if (profile.role !== "recruiter") {
-          router.push("/candidate");
-          return;
-        }
-        const name = profile.full_name || "";
-        const init = name.split(" ").map((p: string) => p[0]).join("").slice(0, 2).toUpperCase() || "HM";
-        setInitials(init);
+      if (!profile) {
+        router.push("/auth");
+        return;
       }
+      if (profile.role !== "recruiter") {
+        router.push("/candidate");
+        return;
+      }
+      const name = profile.full_name || "";
+      const init = name.split(" ").map((p: string) => p[0]).join("").slice(0, 2).toUpperCase() || "HM";
+      setInitials(init);
       setLoading(false);
     };
     checkAuth();

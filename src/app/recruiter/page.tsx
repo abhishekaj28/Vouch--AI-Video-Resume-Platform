@@ -36,7 +36,11 @@ export default function RecruiterDashboard() {
       setUser(user);
 
       const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-      if (profile && profile.role !== "recruiter") {
+      if (!profile) {
+        router.push("/auth");
+        return;
+      }
+      if (profile.role !== "recruiter") {
         router.push("/candidate");
         return;
       }

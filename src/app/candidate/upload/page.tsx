@@ -82,7 +82,11 @@ export default function UploadPage() {
       }
       setUser(user);
       const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-      if (profile && profile.role !== "candidate") {
+      if (!profile) {
+        router.push("/auth");
+        return;
+      }
+      if (profile.role !== "candidate") {
         router.push("/recruiter");
         return;
       }
