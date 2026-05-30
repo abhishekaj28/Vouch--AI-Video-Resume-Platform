@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Video, Zap, Briefcase, Camera, ArrowRight, RefreshCw, Brain, FileText, CheckCircle, Share2, Award } from "lucide-react";
+import { Video, Zap, Briefcase, Camera, ArrowRight, RefreshCw, Brain, FileText, CheckCircle, Share2, Award, ChevronRight } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import * as RechartsPrimitive from "recharts";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
@@ -672,6 +672,40 @@ export default function CandidateDashboard() {
             </div>
           </div>
         )}
+
+        {/* AI Mock Interview Simulator Premium Section */}
+        <div className="mt-12 rounded-[22px] border border-border bg-panel p-6 sm:p-8 shadow-2xl relative overflow-hidden hover:border-brand/35 hover:shadow-[0_0_40px_-10px_rgba(245,197,24,0.15)] transition-all duration-300">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-brand/3 rounded-full blur-[100px] pointer-events-none" />
+          
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+            <div className="space-y-2">
+              <span className="rounded-full bg-brand/10 border border-brand/20 px-3 py-1 text-xs font-bold text-brand uppercase tracking-wider">
+                Interactive simulator
+              </span>
+              <h2 className="font-heading text-2xl font-black text-white tracking-tight">
+                Ace Your Next Technical Round with Vouch AI 🧠
+              </h2>
+              <p className="text-sm text-muted-foreground font-semibold max-w-xl">
+                Start a dynamic 3-round conversational practice session. Our adaptive Gemini engine evaluates response depth, tests technical vocabulary, and grades communication styles on the fly.
+              </p>
+            </div>
+            
+            <div className="flex flex-wrap gap-3 shrink-0">
+              <Link
+                href="/candidate/mock-interview/frontend"
+                className="inline-flex h-11 items-center gap-2 rounded-lg bg-brand px-5 text-xs font-bold text-brand-foreground hover:brightness-110 transition shadow-md shadow-brand/20 animate-in fade-in"
+              >
+                Frontend Mock <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
+              <Link
+                href="/candidate/mock-interview/backend"
+                className="inline-flex h-11 items-center gap-2 rounded-lg border border-border bg-transparent px-5 text-xs font-bold text-white hover:bg-white/5 transition"
+              >
+                Backend Mock <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
 
         {/* Live Database-Backed Jobs Section - Upgraded to World-Class Job Hunt Center */}
         <div id="browse-jobs" className="mt-16 scroll-mt-20">
