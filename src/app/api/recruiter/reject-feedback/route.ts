@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     const skills = scores.skills || []
 
     // 3. Construct Gemini Prompt
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
     const prompt = `You are a warm, extremely supportive, and constructive technical recruiter.
 Write a personalized rejection email / constructive feedback letter for an applicant named "${candidateName}" who applied for the "${jobTitle}" position at "${companyName}".
 

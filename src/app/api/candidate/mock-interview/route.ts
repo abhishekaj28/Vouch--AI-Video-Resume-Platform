@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'domain, question, and userAnswer are required' }, { status: 400 })
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
     const prompt = `You are a supportive, warm, but technically rigorous AI Technical Interviewer for Vouch.
 The candidate is undergoing a mock interview in the "${domain}" domain.
