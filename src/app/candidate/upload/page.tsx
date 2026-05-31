@@ -41,6 +41,54 @@ export default function UploadPage() {
   const [generatingCoach, setGeneratingCoach] = useState(false);
   const [coachBlueprint, setCoachBlueprint] = useState<any | null>(null);
   const [activeCoachTab, setActiveCoachTab] = useState<"focus" | "talking" | "script">("focus");
+  const [autoScrollActive, setAutoScrollActive] = useState(false);
+  const [scrollSpeed, setScrollSpeed] = useState(3);
+  const teleprompterRef = useRef<HTMLTextAreaElement>(null);
+
+  // Silky Smooth Framerate-Independent Auto-Scroll Effect
+  useEffect(() => {
+    if (!autoScrollActive) return;
+
+    let animId: number;
+    let lastTime = performance.now();
+    
+    const scroll = (time: number) => {
+      const textarea = teleprompterRef.current;
+      if (!textarea) return;
+
+      const delta = time - lastTime;
+      lastTime = time;
+
+      // Delta-time based increment to guarantee smooth speed across refresh rates
+      const scrollStep = scrollSpeed * delta * 0.007; 
+      textarea.scrollTop += scrollStep;
+
+      if (textarea.scrollTop < textarea.scrollHeight - textarea.clientHeight) {
+        animId = requestAnimationFrame(scroll);
+      } else {
+        setAutoScrollActive(false);
+      }
+    };
+
+    animId = requestAnimationFrame(scroll);
+    return () => cancelAnimationFrame(animId);
+  }, [autoScrollActive, scrollSpeed]);
+
+  // Connect auto-scroll dynamically to recording status
+  useEffect(() => {
+    if (recording) {
+      if (teleprompterRef.current) {
+        teleprompterRef.current.scrollTop = 0;
+      }
+      // Brief delay to start scroll as they speak first sentence
+      const t = setTimeout(() => {
+        setAutoScrollActive(true);
+      }, 1500);
+      return () => clearTimeout(t);
+    } else {
+      setAutoScrollActive(false);
+    }
+  }, [recording]);
 
   const generateCoachBlueprint = async () => {
     if (!jobDescription.trim()) {
@@ -937,29 +985,61 @@ export default function UploadPage() {
                 </button>
 
                 {teleprompterOpen && (
-                  <div className="border-t border-border/60 p-4 space-y-4">
-                    {/* Font size adjustments slider */}
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-extrabold flex items-center gap-1">
-                        <Sliders className="w-3 h-3" /> Adjust Text Size
-                      </span>
-                      <input
-                        type="range"
-                        min="12"
-                        max="24"
-                        value={teleprompterSize}
-                        onChange={(e) => setTeleprompterSize(Number(e.target.value))}
-                        className="w-24 h-1 bg-card rounded-lg appearance-none cursor-pointer accent-brand"
-                      />
+                  <div className="border-t border-border/60 p-4 space-y-3.5">
+                    {/* Size and Autoscroll settings row */}
+                    <div className="flex flex-col sm:flex-row gap-3 justify-between bg-card/25 border border-border/30 p-3 rounded-xl text-xs font-bold">
+                      {/* Font size control */}
+                      <div className="flex items-center justify-between sm:justify-start gap-2.5">
+                        <span className="text-[9px] text-muted-foreground uppercase tracking-wider font-black flex items-center gap-1">
+                          <Sliders className="w-3 h-3 text-brand" /> Size
+                        </span>
+                        <input
+                          type="range"
+                          min="12"
+                          max="24"
+                          value={teleprompterSize}
+                          onChange={(e) => setTeleprompterSize(Number(e.target.value))}
+                          className="w-20 h-1 bg-panel rounded-lg appearance-none cursor-pointer accent-brand"
+                        />
+                        <span className="text-[10px] text-brand font-mono">{teleprompterSize}px</span>
+                      </div>
+
+                      {/* Auto-scroll toggle and speed */}
+                      <div className="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 border-border/40 pt-2 sm:pt-0">
+                        <button
+                          onClick={() => setAutoScrollActive(!autoScrollActive)}
+                          className={`h-6 inline-flex items-center justify-center gap-1 rounded-md px-2.5 text-[9px] uppercase tracking-wider font-black transition ${
+                            autoScrollActive
+                              ? "bg-brand text-brand-foreground hover:brightness-105 shadow-sm shadow-brand/10 animate-pulse"
+                              : "border border-border text-muted-foreground hover:text-white hover:bg-white/5"
+                          }`}
+                        >
+                          {autoScrollActive ? "⏸ Pause" : "▶ Autoscroll"}
+                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] text-muted-foreground uppercase tracking-widest">Speed</span>
+                          <input
+                            type="range"
+                            min="1"
+                            max="10"
+                            value={scrollSpeed}
+                            onChange={(e) => setScrollSpeed(Number(e.target.value))}
+                            className="w-16 h-1 bg-panel rounded-lg appearance-none cursor-pointer accent-brand"
+                          />
+                          <span className="text-[10px] text-brand font-mono">{scrollSpeed}x</span>
+                        </div>
+                      </div>
                     </div>
+
                     {/* Editable Script box */}
                     <textarea
+                      ref={teleprompterRef}
                       value={teleprompterScript}
                       onChange={(e) => {
                         setTeleprompterScript(e.target.value);
                         localStorage.setItem("vouch_teleprompter_script", e.target.value);
                       }}
-                      className="w-full rounded-lg border border-border bg-card/40 p-3.5 font-sans leading-relaxed text-white/90 outline-none focus:border-brand/60 transition select-text resize-none overflow-y-auto max-h-56 h-36"
+                      className="w-full rounded-lg border border-border bg-card/40 p-3.5 font-sans leading-relaxed text-white/90 outline-none focus:border-brand/60 transition select-text resize-none overflow-y-auto max-h-56 h-36 scrollbar-thin scrollbar-thumb-brand/20 scrollbar-track-transparent"
                       style={{ fontSize: `${teleprompterSize}px` }}
                       placeholder="Type or paste your elevator pitch here..."
                     />
