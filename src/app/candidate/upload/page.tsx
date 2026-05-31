@@ -40,6 +40,7 @@ export default function UploadPage() {
   const [coachActive, setCoachActive] = useState(false);
   const [generatingCoach, setGeneratingCoach] = useState(false);
   const [coachBlueprint, setCoachBlueprint] = useState<any | null>(null);
+  const [activeCoachTab, setActiveCoachTab] = useState<"focus" | "talking" | "script">("focus");
 
   const generateCoachBlueprint = async () => {
     if (!jobDescription.trim()) {
@@ -54,7 +55,8 @@ export default function UploadPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           jobDescription,
-          skills: profile?.skills || ["React", "TypeScript", "UI Engineering"]
+          skills: profile?.skills || ["React", "TypeScript", "UI Engineering"],
+          candidateName: profile?.full_name || "Abhishek"
         })
       });
 
@@ -64,6 +66,8 @@ export default function UploadPage() {
 
       const data = await response.json();
       setCoachBlueprint(data);
+      // Reset active tab to first tab upon generation
+      setActiveCoachTab("focus");
       toast.dismiss(toastId);
       toast.success("AI Speaking Coaching Blueprint generated successfully!");
     } catch (err: any) {
@@ -75,12 +79,46 @@ export default function UploadPage() {
     }
   };
 
-  const handleLoadCoachOutline = () => {
+  const handleLoadCoachEverything = () => {
+    if (!coachBlueprint) return;
+    
+    let compiled = `👋 HELLO! MY 90-SECOND SPEECH SCRIPT:\n\n${coachBlueprint.teleprompterOutline || ""}\n\n`;
+    
+    if (coachBlueprint.talkingPoints && coachBlueprint.talkingPoints.length > 0) {
+      compiled += `🗣️ STAR TALKING POINTS REMINDERS:\n`;
+      coachBlueprint.talkingPoints.forEach((p: string, idx: number) => {
+        compiled += `• ${p}\n`;
+      });
+      compiled += `\n`;
+    }
+    
+    if (coachBlueprint.tips && coachBlueprint.tips.length > 0) {
+      compiled += `🎯 KEY JD FOCUS TIPS:\n`;
+      coachBlueprint.tips.forEach((t: string) => {
+        compiled += `• ${t}\n`;
+      });
+      compiled += `\n`;
+    }
+    
+    if (coachBlueprint.warnings && coachBlueprint.warnings.length > 0) {
+      compiled += `⚠️ SPEAKING WARNINGS:\n`;
+      coachBlueprint.warnings.forEach((w: string) => {
+        compiled += `• ${w}\n`;
+      });
+    }
+
+    setTeleprompterScript(compiled.trim());
+    localStorage.setItem("vouch_teleprompter_script", compiled.trim());
+    setTeleprompterOpen(true);
+    toast.success("Complete AI Coach Speaking System loaded into teleprompter!");
+  };
+
+  const handleLoadCoachScriptOnly = () => {
     if (!coachBlueprint || !coachBlueprint.teleprompterOutline) return;
     setTeleprompterScript(coachBlueprint.teleprompterOutline);
     localStorage.setItem("vouch_teleprompter_script", coachBlueprint.teleprompterOutline);
     setTeleprompterOpen(true);
-    toast.success("AI Coach talking outline loaded into teleprompter!");
+    toast.success("AI Coach verbatim script loaded into teleprompter!");
   };
 
   useEffect(() => {
@@ -681,7 +719,7 @@ export default function UploadPage() {
                 </button>
 
                 {coachActive && (
-                  <div className="border-t border-border/60 p-5 space-y-5 text-left">
+                  <div className="border-t border-border/60 p-5 space-y-4 text-left">
                     {!coachBlueprint ? (
                       <div className="space-y-4">
                         <label className="block text-[10px] uppercase tracking-wider text-muted-foreground font-bold">
@@ -711,58 +749,107 @@ export default function UploadPage() {
                         </button>
                       </div>
                     ) : (
-                      <div className="space-y-5">
-                        {/* 1. Job Focus Tips */}
-                        <div className="space-y-2">
-                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-extrabold flex items-center gap-1">
-                            🎯 JD Focus Tips
-                          </span>
-                          <ul className="space-y-1.5 pl-1.5 text-xs text-white/90 leading-relaxed font-semibold">
-                            {coachBlueprint.tips?.map((t: string, i: number) => (
-                              <li key={i} className="flex gap-2 items-start">
-                                <span className="text-brand shrink-0">✓</span>
-                                <span>{t}</span>
-                              </li>
-                            ))}
-                          </ul>
+                      <div className="space-y-4">
+                        {/* Elegant Tabbed Navigation */}
+                        <div className="flex border-b border-border/30 text-[10px] font-black uppercase tracking-wider mb-2">
+                          {[
+                            { id: "focus", label: "🎯 Focus" },
+                            { id: "talking", label: "🗣️ STAR Points" },
+                            { id: "script", label: "📜 Pitch Script" },
+                          ].map((tab) => (
+                            <button
+                              key={tab.id}
+                              onClick={() => setActiveCoachTab(tab.id as any)}
+                              className={`flex-1 py-2 text-center border-b-2 transition duration-200 ${
+                                activeCoachTab === tab.id
+                                  ? "border-brand text-brand font-black"
+                                  : "border-transparent text-muted-foreground hover:text-white"
+                              }`}
+                            >
+                              {tab.label}
+                            </button>
+                          ))}
                         </div>
 
-                        {/* 2. Suggested Talking Points */}
-                        <div className="space-y-2 border-t border-border/40 pt-4">
-                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-extrabold flex items-center gap-1">
-                            📝 Talking Points (STAR Method)
-                          </span>
-                          <ul className="space-y-2 pl-1.5 text-[11px] text-muted-foreground leading-normal font-semibold">
-                            {coachBlueprint.talkingPoints?.map((p: string, i: number) => (
-                              <li key={i} className="flex gap-2 items-start bg-card/35 border border-border/40 p-2.5 rounded-xl hover:border-brand/20 transition">
-                                <span>{p}</span>
-                              </li>
-                            ))}
-                          </ul>
+                        {/* Tab Contents: Ultra compact, scrollable with custom bar */}
+                        <div className="max-h-[200px] overflow-y-auto pr-1 select-text scrollbar-thin scrollbar-thumb-brand/20 scrollbar-track-transparent">
+                          {activeCoachTab === "focus" && (
+                            <div className="space-y-4">
+                              {/* 1. Job Focus Tips */}
+                              <div className="space-y-1.5">
+                                <span className="text-[9px] uppercase tracking-wider text-brand font-extrabold flex items-center gap-1">
+                                  🎯 JD Focus Tips
+                                </span>
+                                <ul className="space-y-1.5 pl-1.5 text-xs text-white/90 leading-relaxed font-semibold">
+                                  {coachBlueprint.tips?.map((t: string, i: number) => (
+                                    <li key={i} className="flex gap-2 items-start">
+                                      <span className="text-brand shrink-0">✓</span>
+                                      <span>{t}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+
+                              {/* 2. Speaking Warnings */}
+                              <div className="space-y-1.5 border-t border-border/40 pt-3">
+                                <span className="text-[9px] uppercase tracking-wider text-error font-extrabold flex items-center gap-1">
+                                  ⚠️ Speaking Warnings
+                                </span>
+                                <ul className="space-y-1.5 pl-1.5 text-xs text-white/80 leading-relaxed font-semibold">
+                                  {coachBlueprint.warnings?.map((w: string, i: number) => (
+                                    <li key={i} className="flex gap-2 items-start text-error/95">
+                                      <span className="shrink-0">⚠️</span>
+                                      <span>{w}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+                          )}
+
+                          {activeCoachTab === "talking" && (
+                            <div className="space-y-2">
+                              <span className="text-[9px] uppercase tracking-wider text-brand font-extrabold flex items-center gap-1">
+                                📝 Talking Points (STAR Method)
+                              </span>
+                              <ul className="space-y-2 pl-1.5 text-[11px] text-muted-foreground leading-normal font-semibold">
+                                {coachBlueprint.talkingPoints?.map((p: string, i: number) => (
+                                  <li key={i} className="flex gap-2.5 items-start bg-card/35 border border-border/40 p-2.5 rounded-xl hover:border-brand/20 transition text-white/90">
+                                    <span className="text-brand shrink-0">✓</span>
+                                    <span>{p}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {activeCoachTab === "script" && (
+                            <div className="space-y-2">
+                              <span className="text-[9px] uppercase tracking-wider text-brand font-extrabold flex items-center gap-1">
+                                📜 Tailored 90-Second Speech Script
+                              </span>
+                              <div className="bg-card/45 border border-border/40 p-3 rounded-xl text-xs text-white/95 leading-relaxed font-medium font-sans whitespace-pre-line">
+                                {coachBlueprint.teleprompterOutline}
+                              </div>
+                            </div>
+                          )}
                         </div>
 
-                        {/* 3. Speaking Warnings */}
-                        <div className="space-y-2 border-t border-border/40 pt-4">
-                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-extrabold flex items-center gap-1">
-                            ⚠️ Speaking Warnings
-                          </span>
-                          <ul className="space-y-1.5 pl-1.5 text-xs text-white/80 leading-relaxed font-semibold">
-                            {coachBlueprint.warnings?.map((w: string, i: number) => (
-                              <li key={i} className="flex gap-2 items-start text-error/95">
-                                <span className="shrink-0">⚠️</span>
-                                <span>{w}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex gap-3 pt-4 border-t border-border/40">
+                        {/* Actions Footer */}
+                        <div className="flex flex-col sm:flex-row gap-2 pt-3 border-t border-border/40">
                           <button
-                            onClick={handleLoadCoachOutline}
+                            onClick={handleLoadCoachEverything}
                             className="flex-1 inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-brand text-[10px] font-black text-brand-foreground uppercase tracking-wider hover:brightness-110 transition shadow-md shadow-brand/20"
+                            title="Load Script, STAR Points, and Tips directly to teleprompter"
                           >
-                            📝 Load Outline to Teleprompter
+                            ⚡ Load Everything
+                          </button>
+                          <button
+                            onClick={handleLoadCoachScriptOnly}
+                            className="flex-1 inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-card text-[10px] font-black text-white uppercase tracking-wider hover:border-brand/40 hover:bg-white/5 transition"
+                            title="Load only the 90s ready-to-speak script"
+                          >
+                            📜 Load Script Only
                           </button>
                           <button
                             onClick={() => {
