@@ -61,7 +61,8 @@ export default function UploadPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Coach blueprint generation failed");
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Coach blueprint generation failed");
       }
 
       const data = await response.json();
@@ -73,7 +74,7 @@ export default function UploadPage() {
     } catch (err: any) {
       console.error("AI Coach error:", err);
       toast.dismiss(toastId);
-      toast.error("Failed to generate AI Coach insights. Please try again.");
+      toast.error(err.message || "Failed to generate AI Coach insights. Please try again.");
     } finally {
       setGeneratingCoach(false);
     }
