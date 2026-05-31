@@ -23,6 +23,10 @@ export default function PublicTalentPass({ videoResume, profile }: PublicTalentP
   const skills = videoResume.skills || ["React", "TypeScript", "UI/UX"];
   const initials = profile?.full_name?.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() || "C";
 
+  const shareUrl = typeof window !== "undefined"
+    ? window.location.origin + "/share/" + videoResume.id
+    : `https://vouch.ai/share/${videoResume.id}`;
+
   return (
     <div className="space-y-6">
       {/* 3D Perspective Card Container */}
@@ -92,7 +96,7 @@ export default function PublicTalentPass({ videoResume, profile }: PublicTalentP
             <div className="flex flex-col items-center">
               <div className="p-1 rounded-xl bg-[#13151f] border border-brand/35 shadow-inner">
                 <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&color=f5c518&bgcolor=13151f&data=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "")}`}
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&color=f5c518&bgcolor=13151f&data=${encodeURIComponent(shareUrl)}`}
                   alt="Talent QR Pass"
                   className="w-20 h-20 shrink-0 select-none pointer-events-none rounded-lg"
                 />
@@ -249,7 +253,7 @@ export default function PublicTalentPass({ videoResume, profile }: PublicTalentP
                 ctx.fillText(`★ TOP ${overall >= 85 ? "5%" : "15%"} CERTIFIED`, 340, 550);
 
                 // 7. QR Code load & paint
-                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=f5c518&bgcolor=13151f&data=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "")}`;
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=f5c518&bgcolor=13151f&data=${encodeURIComponent(shareUrl)}`;
                 const qrImg = new Image();
                 qrImg.crossOrigin = "anonymous";
                 qrImg.src = qrUrl;
