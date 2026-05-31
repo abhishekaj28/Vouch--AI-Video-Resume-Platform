@@ -139,6 +139,42 @@ export default function RecruiterDashboard() {
     getData();
   }, [router]);
 
+  // Log recruiter views to the candidate's analytics dashboard
+  useEffect(() => {
+    if (!selectedId || !profile || candidates.length === 0) return;
+    
+    const selCandidate = candidates.find((c) => c.id === selectedId);
+    if (!selCandidate || !selCandidate.candidate_id || selCandidate.candidate_id.startsWith("mock-")) return;
+
+    const logProfileView = async () => {
+      try {
+        // Query to check if recruiter has already viewed this candidate in the last hour to prevent double counting on clicks
+        const oneHourAgo = new Date();
+        oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+        
+        const { data: recentViews } = await supabase
+          .from("profile_views")
+          .select("id")
+          .eq("candidate_id", selCandidate.candidate_id)
+          .eq("recruiter_id", profile.id)
+          .gt("viewed_at", oneHourAgo.toISOString());
+          
+        if (recentViews && recentViews.length > 0) return; // ignore duplicates within an hour
+
+        await supabase
+          .from("profile_views")
+          .insert({
+            candidate_id: selCandidate.candidate_id,
+            recruiter_id: profile.id,
+            recruiter_company: profile.company || profile.full_name || "A Hiring Partner"
+          });
+      } catch (err) {
+        console.warn("Failed to log profile view analytics:", err);
+      }
+    };
+    logProfileView();
+  }, [selectedId, profile, candidates]);
+
   const getInitials = (name?: string) => {
     if (!name) return "HM";
     return name.split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase();

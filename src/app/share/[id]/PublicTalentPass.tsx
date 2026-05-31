@@ -10,6 +10,7 @@ interface PublicTalentPassProps {
     overall_score: number;
     language: string;
     skills?: string[];
+    resume_pdf_url?: string;
   };
   profile: {
     full_name: string;
@@ -119,189 +120,202 @@ export default function PublicTalentPass({ videoResume, profile }: PublicTalentP
       </div>
 
       {/* Actions Panel */}
-      <div className="flex gap-3">
-        <button
-          onClick={() => {
-            if (typeof window !== "undefined") {
-              navigator.clipboard.writeText(window.location.href);
-              toast.success("Shareable profile URL copied to clipboard!");
-            }
-          }}
-          className="flex-1 inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-border bg-transparent text-xs font-bold text-white hover:bg-white/5 transition"
-        >
-          <Share2 className="h-4 w-4" /> Copy Link
-        </button>
-
-        <button
-          onClick={async () => {
-            const toastId = toast.loading("Generating High-Res Talent Pass PNG...");
-            try {
-              const canvas = document.createElement("canvas");
-              canvas.width = 800;
-              canvas.height = 1200;
-              const ctx = canvas.getContext("2d");
-              if (!ctx) throw new Error("Could not create canvas context");
-
-              // 1. Draw premium dark gradient background
-              const grad = ctx.createLinearGradient(0, 0, 0, 1200);
-              grad.addColorStop(0, "#1c1d2e");
-              grad.addColorStop(0.5, "#10111a");
-              grad.addColorStop(1, "#06070a");
-              ctx.fillStyle = grad;
-              ctx.fillRect(0, 0, 800, 1200);
-
-              // 2. Draw gorgeous glow orbs on Canvas
-              // Top Right Amber Glow
-              const topGlow = ctx.createRadialGradient(700, 100, 50, 700, 100, 400);
-              topGlow.addColorStop(0, "rgba(245, 197, 24, 0.12)");
-              topGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
-              ctx.fillStyle = topGlow;
-              ctx.fillRect(0, 0, 800, 1200);
-
-              // Bottom Left Blue Glow
-              const bottomGlow = ctx.createRadialGradient(100, 1100, 50, 100, 1100, 400);
-              bottomGlow.addColorStop(0, "rgba(59, 130, 246, 0.12)");
-              bottomGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
-              ctx.fillStyle = bottomGlow;
-              ctx.fillRect(0, 0, 800, 1200);
-
-              // 3. Draw high-tech Dot-Grid pattern on Canvas
-              ctx.fillStyle = "rgba(245, 197, 24, 0.08)";
-              for (let x = 30; x < 770; x += 32) {
-                for (let y = 30; y < 1170; y += 32) {
-                  ctx.beginPath();
-                  ctx.arc(x, y, 2.5, 0, Math.PI * 2);
-                  ctx.fill();
-                }
+      <div className="flex flex-col gap-3">
+        <div className="flex gap-3">
+          <button
+            onClick={() => {
+              if (typeof window !== "undefined") {
+                navigator.clipboard.writeText(window.location.href);
+                toast.success("Shareable profile URL copied to clipboard!");
               }
+            }}
+            className="flex-1 inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-border bg-transparent text-xs font-bold text-white hover:bg-white/5 transition"
+          >
+            <Share2 className="h-4 w-4" /> Copy Link
+          </button>
 
-              // 4. Draw high-tech corner L-accents on Canvas
-              ctx.strokeStyle = "rgba(245, 197, 24, 0.5)";
-              ctx.lineWidth = 4;
-              // Top Left Corner
-              ctx.beginPath(); ctx.moveTo(40, 70); ctx.lineTo(40, 40); ctx.lineTo(70, 40); ctx.stroke();
-              // Top Right Corner
-              ctx.beginPath(); ctx.moveTo(760, 70); ctx.lineTo(760, 40); ctx.lineTo(730, 40); ctx.stroke();
-              // Bottom Left Corner
-              ctx.beginPath(); ctx.moveTo(40, 1130); ctx.lineTo(40, 1160); ctx.lineTo(70, 1160); ctx.stroke();
-              // Bottom Right Corner
-              ctx.beginPath(); ctx.moveTo(760, 1130); ctx.lineTo(760, 1160); ctx.lineTo(730, 1160); ctx.stroke();
-
-              // 5. Draw thick outer gold border
-              ctx.strokeStyle = "#f5c518";
-              ctx.lineWidth = 20;
-              ctx.strokeRect(10, 10, 780, 1180);
-
-              // 4. Branding Header
-              ctx.fillStyle = "#f5c518";
-              ctx.font = "bold 42px sans-serif";
-              ctx.fillText("VOUCH", 60, 100);
-
-              ctx.fillStyle = "rgba(245, 197, 24, 0.15)";
-              ctx.fillRect(230, 68, 170, 42);
-              ctx.fillStyle = "#f5c518";
-              ctx.font = "bold 20px sans-serif";
-              ctx.fillText("AI VERIFIED", 250, 96);
-
-              ctx.fillStyle = "#8a8f98";
-              ctx.font = "bold 20px sans-serif";
-              ctx.fillText(`ID: ${videoResume.id.slice(0, 12).toUpperCase()}`, 520, 96);
-
-              // Divider line
-              ctx.strokeStyle = "rgba(138, 143, 152, 0.2)";
-              ctx.lineWidth = 2;
-              ctx.beginPath();
-              ctx.moveTo(60, 150);
-              ctx.lineTo(740, 150);
-              ctx.stroke();
-
-              // 5. Candidate Name & Role
-              ctx.fillStyle = "#ffffff";
-              ctx.font = "black 58px sans-serif";
-              ctx.fillText(profile?.full_name || "Anonymous Talent", 60, 240);
-
-              ctx.fillStyle = "#f5c518";
-              ctx.font = "bold 26px sans-serif";
-              ctx.fillText(videoResume.language === "en" ? "FRONTEND ENGINEER" : "MULTILINGUAL DEVELOPER", 60, 290);
-
-              // 6. Score Circle Box
-              ctx.fillStyle = "rgba(138, 143, 152, 0.05)";
-              ctx.fillRect(60, 360, 680, 280);
-              ctx.strokeStyle = "rgba(245, 197, 24, 0.2)";
-              ctx.strokeRect(60, 360, 680, 280);
-
-              ctx.fillStyle = "#8a8f98";
-              ctx.font = "bold 24px sans-serif";
-              ctx.fillText("VOUCH AI PITCH EVALUATION", 100, 420);
-
-              ctx.fillStyle = "#ffffff";
-              ctx.font = "bold 130px sans-serif";
-              ctx.fillText(`${overall}`, 100, 560);
-
-              ctx.fillStyle = "#f5c518";
-              ctx.font = "bold 28px sans-serif";
-              ctx.fillText("/ 100 OVERALL RATING", 340, 510);
-
-              ctx.fillStyle = "#22c55e";
-              ctx.font = "bold 22px sans-serif";
-              ctx.fillText(`★ TOP ${overall >= 85 ? "5%" : "15%"} CERTIFIED`, 340, 550);
-
-              // 7. QR Code load & paint
-              const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=f5c518&bgcolor=13151f&data=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "")}`;
-              const qrImg = new Image();
-              qrImg.crossOrigin = "anonymous";
-              qrImg.src = qrUrl;
-
-              await new Promise((resolve) => {
-                qrImg.onload = resolve;
-                qrImg.onerror = () => {
-                  resolve(null);
-                };
-              });
-
-              // Draw QR frame box
-              ctx.fillStyle = "#13151f";
-              ctx.fillRect(250, 720, 300, 300);
-              ctx.strokeStyle = "rgba(245, 197, 24, 0.4)";
-              ctx.lineWidth = 4;
-              ctx.strokeRect(250, 720, 300, 300);
-
+          <button
+            onClick={async () => {
+              const toastId = toast.loading("Generating High-Res Talent Pass PNG...");
               try {
-                ctx.drawImage(qrImg, 260, 730, 280, 280);
-              } catch (e) {
+                const canvas = document.createElement("canvas");
+                canvas.width = 800;
+                canvas.height = 1200;
+                const ctx = canvas.getContext("2d");
+                if (!ctx) throw new Error("Could not create canvas context");
+
+                // 1. Draw premium dark gradient background
+                const grad = ctx.createLinearGradient(0, 0, 0, 1200);
+                grad.addColorStop(0, "#1c1d2e");
+                grad.addColorStop(0.5, "#10111a");
+                grad.addColorStop(1, "#06070a");
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, 800, 1200);
+
+                // 2. Draw gorgeous glow orbs on Canvas
+                // Top Right Amber Glow
+                const topGlow = ctx.createRadialGradient(700, 100, 50, 700, 100, 400);
+                topGlow.addColorStop(0, "rgba(245, 197, 24, 0.12)");
+                topGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+                ctx.fillStyle = topGlow;
+                ctx.fillRect(0, 0, 800, 1200);
+
+                // Bottom Left Blue Glow
+                const bottomGlow = ctx.createRadialGradient(100, 1100, 50, 100, 1100, 400);
+                bottomGlow.addColorStop(0, "rgba(59, 130, 246, 0.12)");
+                bottomGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+                ctx.fillStyle = bottomGlow;
+                ctx.fillRect(0, 0, 800, 1200);
+
+                // 3. Draw high-tech Dot-Grid pattern on Canvas
+                ctx.fillStyle = "rgba(245, 197, 24, 0.08)";
+                for (let x = 30; x < 770; x += 32) {
+                  for (let y = 30; y < 1170; y += 32) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                  }
+                }
+
+                // 4. Draw high-tech corner L-accents on Canvas
+                ctx.strokeStyle = "rgba(245, 197, 24, 0.5)";
+                ctx.lineWidth = 4;
+                // Top Left Corner
+                ctx.beginPath(); ctx.moveTo(40, 70); ctx.lineTo(40, 40); ctx.lineTo(70, 40); ctx.stroke();
+                // Top Right Corner
+                ctx.beginPath(); ctx.moveTo(760, 70); ctx.lineTo(760, 40); ctx.lineTo(730, 40); ctx.stroke();
+                // Bottom Left Corner
+                ctx.beginPath(); ctx.moveTo(40, 1130); ctx.lineTo(40, 1160); ctx.lineTo(70, 1160); ctx.stroke();
+                // Bottom Right Corner
+                ctx.beginPath(); ctx.moveTo(760, 1130); ctx.lineTo(760, 1160); ctx.lineTo(730, 1160); ctx.stroke();
+
+                // 5. Draw thick outer gold border
+                ctx.strokeStyle = "#f5c518";
+                ctx.lineWidth = 20;
+                ctx.strokeRect(10, 10, 780, 1180);
+
+                // 4. Branding Header
+                ctx.fillStyle = "#f5c518";
+                ctx.font = "bold 42px sans-serif";
+                ctx.fillText("VOUCH", 60, 100);
+
+                ctx.fillStyle = "rgba(245, 197, 24, 0.15)";
+                ctx.fillRect(230, 68, 170, 42);
                 ctx.fillStyle = "#f5c518";
                 ctx.font = "bold 20px sans-serif";
-                ctx.fillText("SCAN LINK ATTACHED", 300, 870);
+                ctx.fillText("AI VERIFIED", 250, 96);
+
+                ctx.fillStyle = "#8a8f98";
+                ctx.font = "bold 20px sans-serif";
+                ctx.fillText(`ID: ${videoResume.id.slice(0, 12).toUpperCase()}`, 520, 96);
+
+                // Divider line
+                ctx.strokeStyle = "rgba(138, 143, 152, 0.2)";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(60, 150);
+                ctx.lineTo(740, 150);
+                ctx.stroke();
+
+                // 5. Candidate Name & Role
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "black 58px sans-serif";
+                ctx.fillText(profile?.full_name || "Anonymous Talent", 60, 240);
+
+                ctx.fillStyle = "#f5c518";
+                ctx.font = "bold 26px sans-serif";
+                ctx.fillText(videoResume.language === "en" ? "FRONTEND ENGINEER" : "MULTILINGUAL DEVELOPER", 60, 290);
+
+                // 6. Score Circle Box
+                ctx.fillStyle = "rgba(138, 143, 152, 0.05)";
+                ctx.fillRect(60, 360, 680, 280);
+                ctx.strokeStyle = "rgba(245, 197, 24, 0.2)";
+                ctx.strokeRect(60, 360, 680, 280);
+
+                ctx.fillStyle = "#8a8f98";
+                ctx.font = "bold 24px sans-serif";
+                ctx.fillText("VOUCH AI PITCH EVALUATION", 100, 420);
+
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 130px sans-serif";
+                ctx.fillText(`${overall}`, 100, 560);
+
+                ctx.fillStyle = "#f5c518";
+                ctx.font = "bold 28px sans-serif";
+                ctx.fillText("/ 100 OVERALL RATING", 340, 510);
+
+                ctx.fillStyle = "#22c55e";
+                ctx.font = "bold 22px sans-serif";
+                ctx.fillText(`★ TOP ${overall >= 85 ? "5%" : "15%"} CERTIFIED`, 340, 550);
+
+                // 7. QR Code load & paint
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=f5c518&bgcolor=13151f&data=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "")}`;
+                const qrImg = new Image();
+                qrImg.crossOrigin = "anonymous";
+                qrImg.src = qrUrl;
+
+                await new Promise((resolve) => {
+                  qrImg.onload = resolve;
+                  qrImg.onerror = () => {
+                    resolve(null);
+                  };
+                });
+
+                // Draw QR frame box
+                ctx.fillStyle = "#13151f";
+                ctx.fillRect(250, 720, 300, 300);
+                ctx.strokeStyle = "rgba(245, 197, 24, 0.4)";
+                ctx.lineWidth = 4;
+                ctx.strokeRect(250, 720, 300, 300);
+
+                try {
+                  ctx.drawImage(qrImg, 260, 730, 280, 280);
+                } catch (e) {
+                  ctx.fillStyle = "#f5c518";
+                  ctx.font = "bold 20px sans-serif";
+                  ctx.fillText("SCAN LINK ATTACHED", 300, 870);
+                }
+
+                ctx.fillStyle = "#8a8f98";
+                ctx.font = "bold 22px sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText("SCAN TO PLAY AI VIDEO PITCH INSTANTLY", 400, 1070);
+
+                // Footer meta
+                ctx.fillStyle = "#8a8f98";
+                ctx.font = "16px sans-serif";
+                ctx.fillText("POWERED BY DEEPMIND ADVANCED GEMINI GRADERS", 400, 1140);
+
+                // 8. Trigger crisp PNG download!
+                const downloadLink = document.createElement("a");
+                downloadLink.download = `${(profile?.full_name || "Vouch").replace(/\s+/g, "_")}_AI_Verified_Pass.png`;
+                downloadLink.href = canvas.toDataURL("image/png");
+                downloadLink.click();
+
+                toast.dismiss(toastId);
+                toast.success("Talent Pass downloaded successfully!");
+              } catch (e: any) {
+                console.error("Canvas draw error:", e);
+                toast.dismiss(toastId);
+                toast.error("Failed to render Pass download.");
               }
+            }}
+            className="flex-1 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-brand text-xs font-bold text-brand-foreground hover:brightness-110 transition shadow-md shadow-brand/20"
+          >
+            <Award className="h-4 w-4" /> Download PNG
+          </button>
+        </div>
 
-              ctx.fillStyle = "#8a8f98";
-              ctx.font = "bold 22px sans-serif";
-              ctx.textAlign = "center";
-              ctx.fillText("SCAN TO PLAY AI VIDEO PITCH INSTANTLY", 400, 1070);
-
-              // Footer meta
-              ctx.fillStyle = "#8a8f98";
-              ctx.font = "16px sans-serif";
-              ctx.fillText("POWERED BY DEEPMIND ADVANCED GEMINI GRADERS", 400, 1140);
-
-              // 8. Trigger crisp PNG download!
-              const downloadLink = document.createElement("a");
-              downloadLink.download = `${(profile?.full_name || "Vouch").replace(/\s+/g, "_")}_AI_Verified_Pass.png`;
-              downloadLink.href = canvas.toDataURL("image/png");
-              downloadLink.click();
-
-              toast.dismiss(toastId);
-              toast.success("Talent Pass downloaded successfully!");
-            } catch (e: any) {
-              console.error("Canvas draw error:", e);
-              toast.dismiss(toastId);
-              toast.error("Failed to render Pass download.");
-            }
-          }}
-          className="flex-1 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-brand text-xs font-bold text-brand-foreground hover:brightness-110 transition shadow-md shadow-brand/20"
-        >
-          <Award className="h-4 w-4" /> Download PNG
-        </button>
+        {videoResume.resume_pdf_url && (
+          <a
+            href={videoResume.resume_pdf_url}
+            target="_blank"
+            rel="noreferrer"
+            className="w-full inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-red-500/35 bg-red-500/10 text-xs font-bold text-red-400 hover:bg-red-500 hover:text-white transition duration-200"
+          >
+            📄 Download Resume PDF
+          </a>
+        )}
       </div>
     </div>
   );

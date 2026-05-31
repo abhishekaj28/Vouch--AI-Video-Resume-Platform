@@ -40,6 +40,26 @@ export default async function PublicSharePage({ params }: SharePageProps) {
     );
   }
 
+  // Profile Visibility Control Guard
+  if (resume.is_public === false) {
+    return (
+      <div className="min-h-screen bg-background text-white flex flex-col items-center justify-center p-6 text-center">
+        <div className="text-6xl mb-4">🔒</div>
+        <h1 className="font-heading text-2xl font-black text-white">Profile is Private</h1>
+        <p className="mt-2 text-muted-foreground text-sm max-w-sm">
+          The candidate has restricted public access to their Vouch video resume scorecard and speech metrics.
+        </p>
+        <Link
+          href="/"
+          className="mt-6 rounded-lg bg-brand px-6 py-2.5 text-xs font-bold text-brand-foreground hover:brightness-110 transition shadow-md shadow-brand/20"
+        >
+          Return to Home
+        </Link>
+      </div>
+    );
+  }
+
+
   const profile = resume.profiles;
   const skills = resume.skills || [];
 

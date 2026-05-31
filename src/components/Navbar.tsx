@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Bell, Plus, LogOut, ChevronDown, Layers } from "lucide-react";
 import { Logo } from "./Logo";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 type NavLink = { label: string; href: string };
 
@@ -24,6 +25,7 @@ export function Navbar({
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   const candidateLinks: NavLink[] = [
     { label: "Dashboard", href: "/candidate" },
@@ -50,11 +52,48 @@ export function Navbar({
           .select("*")
           .eq("id", currentUser.id)
           .single();
-        if (currentProfile) setProfile(currentProfile);
+        if (currentProfile) {
+          setProfile(currentProfile);
+          
+          if (currentProfile.role === "candidate") {
+            const { data: dbNotes } = await supabase
+              .from("notifications")
+              .select("*")
+              .eq("candidate_id", currentUser.id)
+              .order("created_at", { ascending: false });
+            setNotifications(dbNotes || []);
+          }
+        }
       }
     };
     fetchUser();
   }, []);
+
+  // Real-time notifications listener
+  useEffect(() => {
+    if (!user || profile?.role !== "candidate") return;
+
+    const channel = supabase
+      .channel("live_notifications")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `candidate_id=eq.${user.id}`,
+        },
+        (payload) => {
+          setNotifications((prev) => [payload.new, ...prev]);
+          toast.success(`🔔 Job Alert: ${payload.new.title}`);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, profile]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -160,34 +199,86 @@ export function Navbar({
                   }`}
                 >
                   <Bell className="h-[18px] w-[18px]" />
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-brand rounded-full ring-2 ring-background animate-pulse" />
+                  {notifications.filter(n => !n.is_read).length > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-red-500 px-1 text-[8px] font-black text-white ring-2 ring-background animate-pulse">
+                      {notifications.filter(n => !n.is_read).length}
+                    </span>
+                  )}
                 </button>
                 
                 {showNotifications && (
                   <div className="absolute right-0 top-12 w-80 rounded-[14px] border border-border bg-panel p-4 shadow-2xl z-50 animate-in slide-in-from-top-3 fade-in duration-200">
                     <div className="flex items-center justify-between border-b border-border/60 pb-2.5 mb-2.5 text-xs font-bold uppercase tracking-wider text-brand">
                       <span>Live Milestones</span>
-                      <span className="rounded-full bg-brand/15 px-2 py-0.5 text-[9px] text-brand">2 New</span>
+                      {notifications.filter(n => !n.is_read).length > 0 && (
+                        <span className="rounded-full bg-brand/15 px-2 py-0.5 text-[9px] text-brand">
+                          {notifications.filter(n => !n.is_read).length} New
+                        </span>
+                      )}
                     </div>
-                    <div className="space-y-2.5">
-                      <div className="flex items-start gap-2.5 rounded-xl bg-card/45 p-3 hover:bg-card/75 transition border border-border/40">
-                        <span className="text-base shrink-0 mt-0.5">🎉</span>
-                        <div>
-                          <p className="text-xs font-bold text-white leading-normal">Profile Setup Complete!</p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5 leading-normal">Your Vouch AI scoring scorecard is active. Speak clearly during your pitch.</p>
-                        </div>
+                    
+                    {notifications.length === 0 ? (
+                      <div className="py-6 text-center text-xs text-muted-foreground font-semibold">
+                        All quiet! You're fully up to date.
                       </div>
-                      <div className="flex items-start gap-2.5 rounded-xl bg-card/45 p-3 hover:bg-card/75 transition border border-border/40">
-                        <span className="text-base shrink-0 mt-0.5">📄</span>
-                        <div>
-                          <p className="text-xs font-bold text-white leading-normal">Browse Live Roles</p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5 leading-normal">12+ new positions are open. Apply dynamically with your Vouch intro.</p>
+                    ) : (
+                      <>
+                        <div className="space-y-2.5 max-h-64 overflow-y-auto pr-0.5 scrollbar-thin scrollbar-thumb-brand/20">
+                          {notifications.map((n) => (
+                            <div 
+                              key={n.id} 
+                              onClick={async () => {
+                                await supabase
+                                  .from("notifications")
+                                  .update({ is_read: true })
+                                  .eq("id", n.id);
+                                setNotifications(prev => prev.map(item => item.id === n.id ? { ...item, is_read: true } : item));
+                                if (n.link) router.push(n.link);
+                                setShowNotifications(false);
+                              }}
+                              className={`flex items-start gap-2.5 rounded-xl p-3 transition border cursor-pointer ${
+                                n.is_read 
+                                  ? "bg-card/35 hover:bg-card/65 border-border/40" 
+                                  : "bg-brand/5 border-brand/20 hover:bg-brand/10"
+                              }`}
+                            >
+                              <span className="text-base shrink-0 mt-0.5 font-sans">🔔</span>
+                              <div className="flex-1 min-w-0 text-left">
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className={`text-xs font-bold truncate ${n.is_read ? "text-white/80" : "text-white"}`}>
+                                    {n.title}
+                                  </p>
+                                  {!n.is_read && <span className="h-1.5 w-1.5 bg-brand rounded-full shrink-0 animate-pulse" />}
+                                </div>
+                                <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed font-semibold">
+                                  {n.message}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      </div>
-                    </div>
+                        
+                        {notifications.filter(n => !n.is_read).length > 0 && (
+                          <button
+                            onClick={async () => {
+                              await supabase
+                                .from("notifications")
+                                .update({ is_read: true })
+                                .eq("candidate_id", user.id);
+                              setNotifications(prev => prev.map(item => ({ ...item, is_read: true })));
+                              toast.success("All notifications marked as read!");
+                            }}
+                            className="w-full text-center text-[10px] font-black uppercase tracking-wider text-brand hover:underline mt-2.5 pt-2.5 border-t border-border/40 block"
+                          >
+                            ✓ Mark all as read
+                          </button>
+                        )}
+                      </>
+                    )}
                   </div>
                 )}
               </div>
+
 
               {/* Sleek Profile Dropdown */}
               <div className="relative">

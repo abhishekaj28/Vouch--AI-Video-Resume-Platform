@@ -96,6 +96,124 @@ export default function CandidateDashboard() {
   const [selectedJobDetail, setSelectedJobDetail] = useState<any>(null);
   const router = useRouter();
 
+  // Premium features state
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+  const [isPublicProfile, setIsPublicProfile] = useState(true);
+  const [profileViews, setProfileViews] = useState<any[]>([]);
+
+  const handlePdfUpload = async (file: File) => {
+    if (file.type !== "application/pdf") {
+      toast.error("Please upload a valid PDF file.");
+      return;
+    }
+    if (!user || !videoResume) {
+      toast.error("Please upload or record a video pitch first so we can link your resume.");
+      return;
+    }
+    
+    setUploadingPdf(true);
+    const toastId = toast.loading("Uploading resume to secure vault...");
+    
+    try {
+      const fileName = `${user.id}-${Date.now()}.pdf`;
+      const { data, error } = await supabase.storage
+        .from("resumes")
+        .upload(fileName, file, { contentType: "application/pdf" });
+        
+      if (error) throw error;
+      
+      const { data: { publicUrl } } = supabase.storage.from("resumes").getPublicUrl(fileName);
+      
+      // Update DB row in video_resumes
+      const { error: dbError } = await supabase
+        .from("video_resumes")
+        .update({ resume_pdf_url: publicUrl })
+        .eq("id", videoResume.id);
+        
+      if (dbError) throw dbError;
+      
+      setVideoResume((prev: any) => ({ ...prev, resume_pdf_url: publicUrl }));
+      toast.dismiss(toastId);
+      toast.success("Resume PDF uploaded successfully!");
+    } catch (err: any) {
+      console.error("PDF upload error:", err);
+      toast.dismiss(toastId);
+      toast.error("Failed to upload PDF. Please try again.");
+    } finally {
+      setUploadingPdf(false);
+    }
+  };
+
+  const handleDeletePdf = async () => {
+    if (!videoResume) return;
+    const toastId = toast.loading("Removing resume from vault...");
+    try {
+      const { error: dbError } = await supabase
+        .from("video_resumes")
+        .update({ resume_pdf_url: null })
+        .eq("id", videoResume.id);
+        
+      if (dbError) throw dbError;
+      
+      setVideoResume((prev: any) => ({ ...prev, resume_pdf_url: null }));
+      toast.dismiss(toastId);
+      toast.success("Resume PDF removed successfully!");
+    } catch (err: any) {
+      console.error("PDF delete error:", err);
+      toast.dismiss(toastId);
+      toast.error("Failed to remove PDF.");
+    }
+  };
+
+  const handleToggleVisibility = async () => {
+    if (!videoResume) return;
+    const nextVal = !isPublicProfile;
+    setIsPublicProfile(nextVal);
+    
+    try {
+      const { error } = await supabase
+        .from("video_resumes")
+        .update({ is_public: nextVal })
+        .eq("id", videoResume.id);
+        
+      if (error) throw error;
+      
+      toast.success(
+        nextVal 
+          ? "Portfolio is now Public! Anyone with your link can view it." 
+          : "Portfolio is now Private! Only recruiters you explicitly apply to can view it."
+      );
+    } catch (err: any) {
+      console.error("Toggle visibility error:", err);
+      setIsPublicProfile(!nextVal); // revert
+      toast.error("Failed to update profile visibility.");
+    }
+  };
+
+  const getAnalyticsData = () => {
+    const data = [];
+    const now = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(now.getDate() - i);
+      const dateString = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      
+      const count = profileViews.filter(v => {
+        const viewDate = new Date(v.viewed_at);
+        return viewDate.getDate() === d.getDate() && viewDate.getMonth() === d.getMonth();
+      }).length;
+      
+      data.push({ date: dateString, views: count });
+    }
+    return data;
+  };
+
+  useEffect(() => {
+    if (videoResume) {
+      setIsPublicProfile(videoResume.is_public !== false);
+    }
+  }, [videoResume]);
+
   useEffect(() => {
     const getData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -120,6 +238,7 @@ export default function CandidateDashboard() {
       const res = await fetch(`/api/candidate/video-resume?userId=${user.id}`);
       const video = res.ok ? await res.json() : null;
       setVideoResume(video);
+
 
       // Fetch live jobs from Supabase
       const { data: dbJobs } = await supabase.from("jobs").select("*").order("created_at", { ascending: false });
@@ -154,6 +273,17 @@ export default function CandidateDashboard() {
         setAssessments(dbAssessments || []);
       } catch (err) {
         console.warn("Failed to fetch assessments:", err);
+      }
+
+      try {
+        const { data: dbViews } = await supabase
+          .from("profile_views")
+          .select("*")
+          .eq("candidate_id", user.id)
+          .order("viewed_at", { ascending: false });
+        setProfileViews(dbViews || []);
+      } catch (err) {
+        console.warn("Failed to fetch profile views:", err);
       }
 
       const displayedList = activeJobs.length > 0 ? activeJobs : [
@@ -590,6 +720,187 @@ export default function CandidateDashboard() {
             </div>
           )}
         </div>
+
+        {/* Analytics & Resume Vault Grid */}
+        {hasVideo && (
+          <div className="mt-8 grid gap-6 md:grid-cols-2 items-start">
+            {/* Left: AI Portfolio Analytics Center */}
+            <div className="rounded-[18px] border border-border bg-panel p-6 shadow-2xl relative overflow-hidden transition-all duration-300 hover:border-brand/20">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/3 rounded-full blur-3xl pointer-events-none" />
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-heading text-base font-bold text-white tracking-tight">AI Portfolio Analytics</h3>
+                  <p className="text-[11px] text-muted-foreground font-semibold mt-0.5">Recruiter views and interactions with your Vouch profile.</p>
+                </div>
+                <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 shrink-0">
+                  <div className="relative">
+                    <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-blue-400 rounded-full animate-ping" />
+                    <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-blue-400 rounded-full" />
+                    <span className="text-lg">👁️</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* View stats count and trend chart */}
+              <div className="mt-6 grid grid-cols-3 gap-4 items-center">
+                <div className="bg-card border border-border/80 p-4 rounded-xl text-center">
+                  <div className="text-[9px] uppercase tracking-wider text-muted-foreground font-extrabold">Total Views</div>
+                  <div className="font-heading text-3xl font-black text-brand mt-1">{profileViews.length}</div>
+                  <span className="text-[8px] text-success font-bold mt-1 inline-block uppercase">Recruiters</span>
+                </div>
+                
+                {/* Trend mini chart */}
+                <div className="col-span-2 h-20 w-full">
+                  <RechartsPrimitive.ResponsiveContainer width="100%" height="100%">
+                    <RechartsPrimitive.AreaChart data={getAnalyticsData()} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.35}/>
+                          <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.01}/>
+                        </linearGradient>
+                      </defs>
+                      <RechartsPrimitive.XAxis dataKey="date" stroke="#8A8F98" fontSize={8} tickLine={false} axisLine={false} />
+                      <RechartsPrimitive.YAxis stroke="#8A8F98" fontSize={8} tickLine={false} axisLine={false} allowDecimals={false} />
+                      <RechartsPrimitive.Tooltip 
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            return (
+                              <div className="rounded-lg border border-border bg-panel/95 p-2 text-[9px] shadow-lg">
+                                <span className="font-bold text-white">{payload[0].value} Views</span>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <RechartsPrimitive.Area type="monotone" dataKey="views" stroke="#3B82F6" strokeWidth={1.5} fillOpacity={1} fill="url(#colorViews)" />
+                    </RechartsPrimitive.AreaChart>
+                  </RechartsPrimitive.ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Recent recruiter companies list */}
+              <div className="mt-5 border-t border-border/40 pt-4">
+                <h4 className="text-[10px] uppercase tracking-wider text-muted-foreground font-extrabold mb-3">Recent Recruiter Views</h4>
+                <div className="space-y-2 max-h-32 overflow-y-auto scrollbar-thin">
+                  {profileViews.slice(0, 3).map((v) => {
+                    const relativeTime = new Date(v.viewed_at).toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit"
+                    }) + " " + new Date(v.viewed_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                    return (
+                      <div key={v.id} className="flex justify-between items-center bg-card/45 border border-border/40 p-2.5 rounded-xl text-[11px] hover:border-brand/20 transition">
+                        <span className="text-white/80 font-medium">A recruiter from <strong className="text-brand font-black">{v.recruiter_company || "A Hiring Partner"}</strong> viewed your profile</span>
+                        <span className="text-muted-foreground font-semibold shrink-0 text-[10px] ml-2">{relativeTime}</span>
+                      </div>
+                    );
+                  })}
+                  {profileViews.length === 0 && (
+                    <p className="text-[10px] text-muted-foreground font-semibold text-center py-4 italic">No recruiter views logged yet. Apply to jobs to attract recruiters!</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Right: AI Resume Vault & Visibility Toggles */}
+            <div className="rounded-[18px] border border-border bg-panel p-6 shadow-2xl relative overflow-hidden transition-all duration-300 hover:border-brand/20">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-brand/3 rounded-full blur-3xl pointer-events-none" />
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-heading text-base font-bold text-white tracking-tight">Resume PDF Vault</h3>
+                  <p className="text-[11px] text-muted-foreground font-semibold mt-0.5">Attach a standard PDF resume alongside your video pitch.</p>
+                </div>
+                <div className="grid h-10 w-10 place-items-center rounded-xl bg-brand/10 text-brand border border-brand/20 shrink-0">
+                  <span className="text-lg">📄</span>
+                </div>
+              </div>
+
+              {/* Drag-and-drop / Upload zone */}
+              <div className="mt-5">
+                {videoResume.resume_pdf_url ? (
+                  <div className="rounded-xl border border-success/30 bg-success/5 p-4 flex items-center justify-between gap-4 animate-in fade-in duration-300">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-10 w-10 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center shrink-0 text-xl font-bold font-sans">
+                        PDF
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-white truncate max-w-[160px]">
+                          {videoResume.resume_pdf_url.split("/").pop()?.slice(-24) || "Candidate_Resume.pdf"}
+                        </p>
+                        <p className="text-[9px] text-success font-bold uppercase tracking-wider mt-0.5">✓ Secured in Vault</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <a 
+                        href={videoResume.resume_pdf_url} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="inline-flex h-8 items-center justify-center rounded-lg bg-card/85 border border-border px-3 text-[10px] font-bold text-white hover:bg-white/5 transition"
+                      >
+                        View
+                      </a>
+                      <button 
+                        onClick={handleDeletePdf}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition shrink-0"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <input 
+                      type="file" 
+                      accept="application/pdf"
+                      disabled={uploadingPdf}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handlePdfUpload(file);
+                      }}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:pointer-events-none"
+                    />
+                    <div className="rounded-xl border border-dashed border-border/80 bg-card/25 p-5 text-center flex flex-col items-center hover:border-brand/40 transition duration-300">
+                      <span className="text-2xl mb-1">📤</span>
+                      <h4 className="text-xs font-bold text-white">Upload Resume PDF</h4>
+                      <p className="text-[9px] text-muted-foreground font-semibold mt-1">Drag file here or click to browse. Max size 5MB.</p>
+                      {uploadingPdf && <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin mt-2" />}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Profile visibility controls toggle */}
+              <div className="mt-5 border-t border-border/40 pt-4 flex items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-xs font-bold text-white tracking-tight flex items-center gap-1.5">
+                    {isPublicProfile ? "🔓 Public Visibility" : "🔒 Private Mode"}
+                  </h4>
+                  <p className="text-[10px] text-muted-foreground font-semibold mt-0.5">
+                    {isPublicProfile 
+                      ? "Anyone with your link can view your scoring and video."
+                      : "Only recruiters you explicitly apply to can view your visual cards."
+                    }
+                  </p>
+                </div>
+                
+                <button
+                  onClick={handleToggleVisibility}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
+                    isPublicProfile ? "bg-brand" : "bg-card border-border/80"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      isPublicProfile ? "translate-x-5 bg-brand-foreground" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Live Active Applications Timeline */}
         <div id="applications" className="mt-12 scroll-mt-20">

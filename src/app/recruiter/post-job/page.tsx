@@ -67,16 +67,44 @@ export default function PostJobPage() {
     }
 
     try {
-      const { error } = await supabase.from("jobs").insert({
-        recruiter_id: user.id,
-        title,
-        company,
-        location: remote ? "Remote" : location,
-        description,
-        required_skills: skills,
-      });
+      const { data: jobData, error } = await supabase
+        .from("jobs")
+        .insert({
+          recruiter_id: user.id,
+          title,
+          company,
+          location: remote ? "Remote" : location,
+          description,
+          required_skills: skills,
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Notify all candidates about the new opening
+      const { data: candidates } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("role", "candidate");
+
+      if (candidates && candidates.length > 0) {
+        const notificationsToInsert = candidates.map((c) => ({
+          candidate_id: c.id,
+          title: `New Job: ${title} at ${company}`,
+          message: `A new opening for a ${title} in ${remote ? "Remote" : location} has been posted. View details and apply with your Vouch video intro today!`,
+          link: `/candidate#browse-jobs`,
+          is_read: false,
+        }));
+
+        const { error: notificationError } = await supabase
+          .from("notifications")
+          .insert(notificationsToInsert);
+
+        if (notificationError) {
+          console.warn("Failed to insert candidate notifications:", notificationError.message);
+        }
+      }
 
       alert(`Successfully published position for "${title}"!`);
       router.push("/recruiter");
