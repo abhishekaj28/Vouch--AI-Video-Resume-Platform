@@ -7,13 +7,18 @@ import PublicTalentPass from "./PublicTalentPass";
 
 
 interface SharePageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
+  searchParams?: Promise<{
+    bypass?: string;
+  }>;
 }
 
-export default async function PublicSharePage({ params }: SharePageProps) {
+export default async function PublicSharePage({ params, searchParams }: SharePageProps) {
   const { id } = await params;
+  const sParams = await searchParams;
+  const bypass = sParams?.bypass === "true";
 
   // 1. Fetch public profile and video resume details
   const { data: resume, error } = await supabaseAdmin
@@ -41,7 +46,7 @@ export default async function PublicSharePage({ params }: SharePageProps) {
   }
 
   // Profile Visibility Control Guard
-  if (resume.is_public === false) {
+  if (resume.is_public === false && !bypass) {
     return (
       <div className="min-h-screen bg-background text-white flex flex-col items-center justify-center p-6 text-center">
         <div className="text-6xl mb-4">🔒</div>
@@ -49,16 +54,23 @@ export default async function PublicSharePage({ params }: SharePageProps) {
         <p className="mt-2 text-muted-foreground text-sm max-w-sm">
           The candidate has restricted public access to their Vouch video resume scorecard and speech metrics.
         </p>
-        <Link
-          href="/"
-          className="mt-6 rounded-lg bg-brand px-6 py-2.5 text-xs font-bold text-brand-foreground hover:brightness-110 transition shadow-md shadow-brand/20"
-        >
-          Return to Home
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-3 mt-6">
+          <Link
+            href={`/share/${id}?bypass=true`}
+            className="rounded-lg bg-brand px-6 py-2.5 text-xs font-bold text-brand-foreground hover:brightness-110 transition shadow-md shadow-brand/20 flex items-center gap-1.5 justify-center"
+          >
+            🔓 Unlock Recruiter Bypass
+          </Link>
+          <Link
+            href="/"
+            className="rounded-lg border border-border bg-transparent px-6 py-2.5 text-xs font-bold text-white hover:bg-white/5 transition flex items-center justify-center"
+          >
+            Return to Home
+          </Link>
+        </div>
       </div>
     );
   }
-
 
   const profile = resume.profiles;
   const skills = resume.skills || [];
@@ -73,6 +85,27 @@ export default async function PublicSharePage({ params }: SharePageProps) {
 
       <main className="mx-auto max-w-5xl px-6 mt-10 relative z-10 animate-in fade-in slide-in-from-bottom-6 duration-500">
         
+        {/* Recruiter Preview Bypass Banner */}
+        {resume.is_public === false && bypass && (
+          <div className="mb-6 rounded-xl border border-brand/35 bg-gradient-to-r from-brand/10 to-transparent px-5 py-3.5 flex items-center justify-between gap-4 shadow-lg">
+            <div className="flex items-center gap-2.5">
+              <div className="h-7 w-7 rounded-lg bg-brand/15 flex items-center justify-center font-bold text-brand text-xs animate-pulse">
+                🛡️
+              </div>
+              <div className="text-left">
+                <h4 className="text-xs font-black text-white uppercase tracking-wider">Recruiter Preview active</h4>
+                <p className="text-[10px] text-muted-foreground mt-0.5">This profile is set to Private. Guest sandbox bypass is enabled.</p>
+              </div>
+            </div>
+            <Link
+              href="/candidate"
+              className="rounded-full bg-brand/10 border border-brand/20 px-2.5 py-0.5 text-[8px] font-black text-brand uppercase tracking-wider hover:bg-brand hover:text-brand-foreground transition"
+            >
+              Configure Visibility
+            </Link>
+          </div>
+        )}
+
         {/* Candidate Spotlight Header */}
         <div className="rounded-[24px] border border-border bg-panel p-8 shadow-2xl relative overflow-hidden mb-8 hover:border-brand/35 hover:shadow-[0_0_50px_-10px_rgba(245,197,24,0.15)] transition-all duration-300">
           <div className="absolute top-0 right-0 w-48 h-48 bg-brand/3 rounded-full blur-[80px]" />
