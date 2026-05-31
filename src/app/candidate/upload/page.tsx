@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Video, RefreshCw, UploadCloud, Brain, Camera, AlertCircle, Play, Check, Settings, Mic, Eye, Sliders, ChevronDown } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { toast } from "sonner";
 
 export default function UploadPage() {
   const [user, setUser] = useState<any>(null);
@@ -33,6 +34,54 @@ export default function UploadPage() {
   
   const defaultScript = `"Hi, I'm Abhishek. I have a strong background in software development, focusing on frontend layouts and clean architectures. My top skills are TypeScript, React, and modular state management. I'm excited about this opportunity because I love building highly optimized experiences."`;
   const [teleprompterScript, setTeleprompterScript] = useState<string>("");
+
+  // AI Pitch Coach State and Handler
+  const [jobDescription, setJobDescription] = useState("");
+  const [coachActive, setCoachActive] = useState(false);
+  const [generatingCoach, setGeneratingCoach] = useState(false);
+  const [coachBlueprint, setCoachBlueprint] = useState<any | null>(null);
+
+  const generateCoachBlueprint = async () => {
+    if (!jobDescription.trim()) {
+      toast.error("Please paste a Job Description to analyze.");
+      return;
+    }
+    setGeneratingCoach(true);
+    const toastId = toast.loading("Analyzing Job Description with Vouch AI...");
+    try {
+      const response = await fetch("/api/candidate/pitch-coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobDescription,
+          skills: profile?.skills || ["React", "TypeScript", "UI Engineering"]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Coach blueprint generation failed");
+      }
+
+      const data = await response.json();
+      setCoachBlueprint(data);
+      toast.dismiss(toastId);
+      toast.success("AI Speaking Coaching Blueprint generated successfully!");
+    } catch (err: any) {
+      console.error("AI Coach error:", err);
+      toast.dismiss(toastId);
+      toast.error("Failed to generate AI Coach insights. Please try again.");
+    } finally {
+      setGeneratingCoach(false);
+    }
+  };
+
+  const handleLoadCoachOutline = () => {
+    if (!coachBlueprint || !coachBlueprint.teleprompterOutline) return;
+    setTeleprompterScript(coachBlueprint.teleprompterOutline);
+    localStorage.setItem("vouch_teleprompter_script", coachBlueprint.teleprompterOutline);
+    setTeleprompterOpen(true);
+    toast.success("AI Coach talking outline loaded into teleprompter!");
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -615,6 +664,120 @@ export default function UploadPage() {
                     />
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Vouch AI Job Prep Coach Card */}
+            {step === "record" && (
+              <div className="rounded-[18px] border border-border bg-panel shadow-2xl overflow-hidden hover:border-brand/20 transition-all duration-300">
+                <button
+                  onClick={() => setCoachActive(!coachActive)}
+                  className="flex w-full items-center justify-between px-5 py-4 text-xs uppercase tracking-wider text-brand font-black hover:bg-white/2 transition"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Brain className="w-4.5 h-4.5 text-brand" /> Vouch AI Pitch Coach
+                  </span>
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${coachActive ? "rotate-180" : ""}`} />
+                </button>
+
+                {coachActive && (
+                  <div className="border-t border-border/60 p-5 space-y-5 text-left">
+                    {!coachBlueprint ? (
+                      <div className="space-y-4">
+                        <label className="block text-[10px] uppercase tracking-wider text-muted-foreground font-bold">
+                          Paste target Job Description (JD)
+                        </label>
+                        <textarea
+                          value={jobDescription}
+                          onChange={(e) => setJobDescription(e.target.value)}
+                          placeholder="Paste requirements, expectations, or full job details here so Vouch AI can analyze focus areas..."
+                          className="w-full h-28 rounded-lg border border-border bg-card/45 p-3 text-xs text-white placeholder:text-muted-foreground outline-none focus:border-brand/60 transition resize-none"
+                          disabled={generatingCoach}
+                        />
+                        <button
+                          onClick={generateCoachBlueprint}
+                          disabled={generatingCoach || !jobDescription.trim()}
+                          className="w-full inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-brand text-xs font-bold text-brand-foreground hover:brightness-110 disabled:opacity-45 disabled:pointer-events-none transition shadow-md shadow-brand/20"
+                        >
+                          {generatingCoach ? (
+                            <>
+                              <RefreshCw className="h-4 w-4 animate-spin" /> Tailoring Speech Signal...
+                            </>
+                          ) : (
+                            <>
+                              🧠 Generate AI Coach Blueprint
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-5">
+                        {/* 1. Job Focus Tips */}
+                        <div className="space-y-2">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-extrabold flex items-center gap-1">
+                            🎯 JD Focus Tips
+                          </span>
+                          <ul className="space-y-1.5 pl-1.5 text-xs text-white/90 leading-relaxed font-semibold">
+                            {coachBlueprint.tips?.map((t: string, i: number) => (
+                              <li key={i} className="flex gap-2 items-start">
+                                <span className="text-brand shrink-0">✓</span>
+                                <span>{t}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* 2. Suggested Talking Points */}
+                        <div className="space-y-2 border-t border-border/40 pt-4">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-extrabold flex items-center gap-1">
+                            📝 Talking Points (STAR Method)
+                          </span>
+                          <ul className="space-y-2 pl-1.5 text-[11px] text-muted-foreground leading-normal font-semibold">
+                            {coachBlueprint.talkingPoints?.map((p: string, i: number) => (
+                              <li key={i} className="flex gap-2 items-start bg-card/35 border border-border/40 p-2.5 rounded-xl hover:border-brand/20 transition">
+                                <span>{p}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* 3. Speaking Warnings */}
+                        <div className="space-y-2 border-t border-border/40 pt-4">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-extrabold flex items-center gap-1">
+                            ⚠️ Speaking Warnings
+                          </span>
+                          <ul className="space-y-1.5 pl-1.5 text-xs text-white/80 leading-relaxed font-semibold">
+                            {coachBlueprint.warnings?.map((w: string, i: number) => (
+                              <li key={i} className="flex gap-2 items-start text-error/95">
+                                <span className="shrink-0">⚠️</span>
+                                <span>{w}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-3 pt-4 border-t border-border/40">
+                          <button
+                            onClick={handleLoadCoachOutline}
+                            className="flex-1 inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-brand text-[10px] font-black text-brand-foreground uppercase tracking-wider hover:brightness-110 transition shadow-md shadow-brand/20"
+                          >
+                            📝 Load Outline to Teleprompter
+                          </button>
+                          <button
+                            onClick={() => {
+                              setCoachBlueprint(null);
+                              setJobDescription("");
+                            }}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-transparent text-muted-foreground hover:text-white transition shrink-0"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
