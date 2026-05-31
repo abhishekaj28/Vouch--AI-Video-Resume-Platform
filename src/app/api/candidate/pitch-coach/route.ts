@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     }
 
     const nameToUse = candidateName || 'Abhishek'
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
 
     const prompt = `You are an elite, warm, and product-focused Vouch AI Interview Coach.
 A candidate named "${nameToUse}" wants to record a 90-second elevator video pitch for a role with the following Job Description (JD):
