@@ -160,6 +160,7 @@ export default function UploadPage() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const getUser = async () => {
@@ -264,7 +265,55 @@ export default function UploadPage() {
           sum += dataArray[i];
         }
         const average = sum / bufferLength;
-        setAudioLevel(Math.min(100, Math.round((average / 128) * 100)));
+        const level = Math.min(100, Math.round((average / 128) * 100));
+        setAudioLevel(level);
+
+        // Dynamic 3D-Sine Wave Visualizer
+        const canvas = canvasRef.current;
+        const ctx = canvas?.getContext("2d");
+        if (canvas && ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          const width = canvas.width;
+          const height = canvas.height;
+          const midY = height / 2;
+
+          // Draw base reference line
+          ctx.strokeStyle = "rgba(245, 197, 24, 0.12)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(0, midY);
+          ctx.lineTo(width, midY);
+          ctx.stroke();
+
+          // 3 layered organic glowing sine waves
+          const waves = [
+            { amp: level * 0.35, freq: 0.04, phase: Date.now() * 0.008, color: "rgba(245, 197, 24, 0.8)", width: 2 },
+            { amp: level * 0.20, freq: 0.07, phase: -Date.now() * 0.005, color: "rgba(245, 197, 24, 0.45)", width: 1.5 },
+            { amp: level * 0.12, freq: 0.02, phase: Date.now() * 0.003, color: "rgba(59, 130, 246, 0.35)", width: 1 },
+          ];
+
+          waves.forEach((w) => {
+            ctx.strokeStyle = w.color;
+            ctx.lineWidth = w.width;
+            ctx.shadowColor = "#f5c518";
+            ctx.shadowBlur = level > 8 ? 8 : 0;
+            ctx.beginPath();
+
+            for (let x = 0; x < width; x++) {
+              // Taper wave beautifully at both edges using smooth sine envelope
+              const envelope = Math.sin((x / width) * Math.PI);
+              const y = midY + Math.sin(x * w.freq + w.phase) * w.amp * envelope;
+              if (x === 0) {
+                ctx.moveTo(x, y);
+              } else {
+                ctx.lineTo(x, y);
+              }
+            }
+            ctx.stroke();
+          });
+          ctx.shadowBlur = 0; // reset shadow
+        }
+
         animationFrameRef.current = requestAnimationFrame(updateMeter);
       };
       updateMeter();
@@ -687,19 +736,24 @@ export default function UploadPage() {
                   </select>
                 </div>
 
-                {/* Live Microphone Visualizer Meter */}
-                <div className="space-y-2 border-t border-border/40 pt-4">
+                {/* Live Microphone Visualizer Waveform */}
+                <div className="space-y-2.5 border-t border-border/40 pt-4">
                   <div className="flex items-center justify-between text-xs font-bold">
                     <span className="text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                      <Mic className="w-3.5 h-3.5 text-brand" /> Microphone Signal
+                      <Mic className="w-3.5 h-3.5 text-brand" /> Studio Voice Waveform
                     </span>
-                    <span className="font-mono text-brand">{audioLevel}%</span>
+                    <span className="font-mono text-brand text-[10px] tracking-widest">
+                      {audioLevel > 5 ? "SIGNAL ACTIVE" : "SILENT"}
+                    </span>
                   </div>
-                  <div className="w-full h-1.5 rounded-full bg-card overflow-hidden border border-border/40">
-                    <div
-                      className="h-full bg-brand transition-all duration-75"
-                      style={{ width: `${audioLevel}%` }}
+                  <div className="w-full h-12 rounded-xl bg-card/65 border border-border/40 overflow-hidden relative flex items-center justify-center p-1 shadow-inner">
+                    <canvas
+                      ref={canvasRef}
+                      width={280}
+                      height={40}
+                      className="w-full h-full"
                     />
+                    <span className="absolute inset-0 bg-gradient-to-r from-panel via-transparent to-panel pointer-events-none opacity-20" />
                   </div>
                 </div>
               </div>
