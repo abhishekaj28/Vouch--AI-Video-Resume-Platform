@@ -592,6 +592,85 @@ export default function UploadPage() {
               </div>
             )}
 
+            {/* Collapsible Teleprompter Script Card (Left Column Spacious Integration) */}
+            {step === "record" && (
+              <div className="rounded-[18px] border border-border bg-panel shadow-2xl overflow-hidden hover:border-brand/10 transition-all duration-300">
+                <button
+                  onClick={() => setTeleprompterOpen(!teleprompterOpen)}
+                  className="flex w-full items-center justify-between px-5 py-4 text-xs uppercase tracking-wider text-brand font-black hover:bg-white/2 transition"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Eye className="w-4 h-4" /> Teleprompter Dashboard Script Console
+                  </span>
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${teleprompterOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {teleprompterOpen && (
+                  <div className="border-t border-border/60 p-5 space-y-4">
+                    {/* Spacious Autoscroll Settings Header Panel */}
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-card/35 border border-border/40 p-4 rounded-xl text-xs font-bold shadow-inner">
+                      {/* Font size control */}
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-extrabold flex items-center gap-1.5">
+                          <Sliders className="w-3.5 h-3.5 text-brand" /> Font Size
+                        </span>
+                        <input
+                          type="range"
+                          min="12"
+                          max="28"
+                          value={teleprompterSize}
+                          onChange={(e) => setTeleprompterSize(Number(e.target.value))}
+                          className="w-32 h-1 bg-panel rounded-lg appearance-none cursor-pointer accent-brand"
+                        />
+                        <span className="text-[10px] text-brand font-mono">{teleprompterSize}px</span>
+                      </div>
+
+                      {/* Play/Pause Button */}
+                      <button
+                        onClick={() => setAutoScrollActive(!autoScrollActive)}
+                        className={`h-9 inline-flex items-center justify-center gap-2 rounded-lg px-5 text-[10px] uppercase tracking-widest font-black transition-all ${
+                          autoScrollActive
+                            ? "bg-brand text-brand-foreground hover:brightness-105 shadow-md shadow-brand/20 animate-pulse"
+                            : "border border-border text-white hover:border-brand/40 hover:bg-white/5"
+                        }`}
+                      >
+                        {autoScrollActive ? "⏸ Pause Auto-Scroll" : "▶ Start Auto-Scroll"}
+                      </button>
+
+                      {/* Speed Slider */}
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-extrabold">
+                          Scroll Speed
+                        </span>
+                        <input
+                          type="range"
+                          min="1"
+                          max="10"
+                          value={scrollSpeed}
+                          onChange={(e) => setScrollSpeed(Number(e.target.value))}
+                          className="w-32 h-1 bg-panel rounded-lg appearance-none cursor-pointer accent-brand"
+                        />
+                        <span className="text-[10px] text-brand font-mono">{scrollSpeed}x</span>
+                      </div>
+                    </div>
+
+                    {/* Editable Script box */}
+                    <textarea
+                      ref={teleprompterRef}
+                      value={teleprompterScript}
+                      onChange={(e) => {
+                        setTeleprompterScript(e.target.value);
+                        localStorage.setItem("vouch_teleprompter_script", e.target.value);
+                      }}
+                      className="w-full rounded-xl border border-border bg-card/45 p-4 font-sans leading-relaxed text-white/95 outline-none focus:border-brand/60 transition select-text resize-none overflow-y-auto h-48 scrollbar-thin scrollbar-thumb-brand/20 scrollbar-track-transparent"
+                      style={{ fontSize: `${teleprompterSize}px` }}
+                      placeholder="Type or paste your elevator pitch here..."
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Step: PREVIEW */}
             {step === "preview" && (
               <div className="rounded-[18px] border border-border bg-panel p-6 shadow-2xl relative">
@@ -971,82 +1050,6 @@ export default function UploadPage() {
               </div>
             )}
 
-            {/* Collapsible Teleprompter Script Card */}
-            {step === "record" && (
-              <div className="rounded-[18px] border border-border bg-panel shadow-2xl overflow-hidden">
-                <button
-                  onClick={() => setTeleprompterOpen(!teleprompterOpen)}
-                  className="flex w-full items-center justify-between px-5 py-4 text-xs uppercase tracking-wider text-brand font-black hover:bg-white/2 transition"
-                >
-                  <span className="flex items-center gap-1.5">
-                    <Eye className="w-4 h-4" /> Teleprompter Teleprompter
-                  </span>
-                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${teleprompterOpen ? "rotate-180" : ""}`} />
-                </button>
-
-                {teleprompterOpen && (
-                  <div className="border-t border-border/60 p-4 space-y-3.5">
-                    {/* Size and Autoscroll settings row */}
-                    <div className="flex flex-col sm:flex-row gap-3 justify-between bg-card/25 border border-border/30 p-3 rounded-xl text-xs font-bold">
-                      {/* Font size control */}
-                      <div className="flex items-center justify-between sm:justify-start gap-2.5">
-                        <span className="text-[9px] text-muted-foreground uppercase tracking-wider font-black flex items-center gap-1">
-                          <Sliders className="w-3 h-3 text-brand" /> Size
-                        </span>
-                        <input
-                          type="range"
-                          min="12"
-                          max="24"
-                          value={teleprompterSize}
-                          onChange={(e) => setTeleprompterSize(Number(e.target.value))}
-                          className="w-20 h-1 bg-panel rounded-lg appearance-none cursor-pointer accent-brand"
-                        />
-                        <span className="text-[10px] text-brand font-mono">{teleprompterSize}px</span>
-                      </div>
-
-                      {/* Auto-scroll toggle and speed */}
-                      <div className="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 border-border/40 pt-2 sm:pt-0">
-                        <button
-                          onClick={() => setAutoScrollActive(!autoScrollActive)}
-                          className={`h-6 inline-flex items-center justify-center gap-1 rounded-md px-2.5 text-[9px] uppercase tracking-wider font-black transition ${
-                            autoScrollActive
-                              ? "bg-brand text-brand-foreground hover:brightness-105 shadow-sm shadow-brand/10 animate-pulse"
-                              : "border border-border text-muted-foreground hover:text-white hover:bg-white/5"
-                          }`}
-                        >
-                          {autoScrollActive ? "⏸ Pause" : "▶ Autoscroll"}
-                        </button>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[9px] text-muted-foreground uppercase tracking-widest">Speed</span>
-                          <input
-                            type="range"
-                            min="1"
-                            max="10"
-                            value={scrollSpeed}
-                            onChange={(e) => setScrollSpeed(Number(e.target.value))}
-                            className="w-16 h-1 bg-panel rounded-lg appearance-none cursor-pointer accent-brand"
-                          />
-                          <span className="text-[10px] text-brand font-mono">{scrollSpeed}x</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Editable Script box */}
-                    <textarea
-                      ref={teleprompterRef}
-                      value={teleprompterScript}
-                      onChange={(e) => {
-                        setTeleprompterScript(e.target.value);
-                        localStorage.setItem("vouch_teleprompter_script", e.target.value);
-                      }}
-                      className="w-full rounded-lg border border-border bg-card/40 p-3.5 font-sans leading-relaxed text-white/90 outline-none focus:border-brand/60 transition select-text resize-none overflow-y-auto max-h-56 h-36 scrollbar-thin scrollbar-thumb-brand/20 scrollbar-track-transparent"
-                      style={{ fontSize: `${teleprompterSize}px` }}
-                      placeholder="Type or paste your elevator pitch here..."
-                    />
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </div>
       </main>
