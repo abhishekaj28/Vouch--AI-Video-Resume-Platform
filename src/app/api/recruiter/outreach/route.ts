@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { requireAuth, rateLimit } from '@/lib/server-auth'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request, 'recruiter')
+  if (auth.error) return auth.error
+  const limited = rateLimit(`outreach:${auth.ctx.userId}`, 20, 60_000)
+  if (limited) return limited
+
   try {
     const { candidateName, overallScore, skills, transcript, jobTitle, companyName } = await request.json()
 
@@ -19,7 +25,7 @@ You want to reach out to a high-scoring candidate named "${candidateName}" for t
 Here are the candidate's metrics from Vouch AI:
 - Overall AI Vouch Rating: ${overallScore || 85}/100
 - Verified Technical Skills: ${JSON.stringify(skills || ["React", "TypeScript"])}
-- Speaking Transcript: "${transcript || ''}"
+- Speaking Transcript: "${String(transcript || '').slice(0, 4000)}"
 
 Draft a highly engaging, custom, and warm recruiter outreach email.
 - Congratulate them on their impressive Vouch AI scorecard metrics and speaking delivery.

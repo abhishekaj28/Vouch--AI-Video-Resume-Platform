@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Video, RefreshCw, UploadCloud, Brain, Camera, AlertCircle, Play, Check, Settings, Mic, Eye, Sliders, ChevronDown } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { toast } from "sonner";
+import { authFetch } from "@/lib/api-client";
 
 export default function UploadPage() {
   const [user, setUser] = useState<any>(null);
@@ -98,7 +99,7 @@ export default function UploadPage() {
     setGeneratingCoach(true);
     const toastId = toast.loading("Analyzing Job Description with Vouch AI...");
     try {
-      const response = await fetch("/api/candidate/pitch-coach", {
+      const response = await authFetch("/api/candidate/pitch-coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -433,7 +434,7 @@ export default function UploadPage() {
       setUploading(false);
       setAnalyzing(true);
 
-      const response = await fetch("/api/analyze", {
+      const response = await authFetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ videoUrl: publicUrl, userId: user.id, language: pitchLanguage }),

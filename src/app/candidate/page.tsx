@@ -9,6 +9,7 @@ import { Navbar } from "@/components/Navbar";
 import * as RechartsPrimitive from "recharts";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { toast } from "sonner";
+import { authFetch } from "@/lib/api-client";
 
 function formatFeedbackText(text: string, companyName?: string) {
   if (!text) return "";
@@ -235,7 +236,7 @@ export default function CandidateDashboard() {
       setProfile(profile);
 
       // Fetch via secure server endpoint to bypass client-side RLS limits
-      const res = await fetch(`/api/candidate/video-resume?userId=${user.id}`);
+      const res = await authFetch(`/api/candidate/video-resume?userId=${user.id}`);
       const video = res.ok ? await res.json() : null;
       setVideoResume(video);
 
@@ -311,7 +312,7 @@ export default function CandidateDashboard() {
 
     if (pendingFeedbackApps.length > 0) {
       pendingFeedbackApps.forEach((app) => {
-        fetch("/api/recruiter/reject-feedback", {
+        authFetch("/api/recruiter/reject-feedback", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ applicationId: app.id }),

@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { requireAuth, rateLimit } from '@/lib/server-auth'
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAuth(request)
+  if (auth.error) return auth.error
+  const userId = auth.ctx.userId
+
   try {
     const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
-
-    if (!userId) {
-      return NextResponse.json({ error: 'Missing userId parameter' }, { status: 400 })
+    const requested = searchParams.get('userId')
+    if (requested && requested !== userId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     // Query the database using the admin client (which bypasses RLS safely)

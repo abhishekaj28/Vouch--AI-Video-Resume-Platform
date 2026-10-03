@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { supabaseAdmin } from '@/lib/supabase'
+import { requireAuth, rateLimit } from '@/lib/server-auth'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request)
+  if (auth.error) return auth.error
+  const limited = rateLimit(`feedback:${auth.ctx.userId}`, 10, 60_000)
+  if (limited) return limited
+
   try {
     const { applicationId } = await request.json()
 
@@ -21,6 +27,11 @@ export async function POST(request: NextRequest) {
 
     if (appErr || !app) {
       return NextResponse.json({ error: 'Application not found' }, { status: 404 })
+    }
+
+    // Only recruiters, or the candidate who owns the application, may generate feedback for it
+    if (auth.ctx.role !== 'recruiter' && app.candidate_id !== auth.ctx.userId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     // 2. Fetch the job details

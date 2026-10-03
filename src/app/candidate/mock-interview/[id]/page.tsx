@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Brain, ArrowRight, Clock, Award, CheckCircle, RefreshCw, MessageSquare, Zap, Star, ShieldAlert, ChevronRight } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { toast } from "sonner";
+import { authFetch } from "@/lib/api-client";
 
 interface HistoryItem {
   question: string;
@@ -55,7 +56,7 @@ export default function MockInterviewPage({ params }: { params: { id: string } }
 
     setLoadingFeedback(true);
     try {
-      const response = await fetch("/api/candidate/mock-interview", {
+      const response = await authFetch("/api/candidate/mock-interview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

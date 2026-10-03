@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { requireAuth, rateLimit } from '@/lib/server-auth'
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAuth(request, 'recruiter')
+  if (auth.error) return auth.error
+
   try {
     // 1. Fetch live jobs to map titles
     const { data: jobs } = await supabaseAdmin.from('jobs').select('*')

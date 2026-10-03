@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { requireAuth, rateLimit } from '@/lib/server-auth'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request)
+  if (auth.error) return auth.error
+  const limited = rateLimit(`interview:${auth.ctx.userId}`, 20, 60_000)
+  if (limited) return limited
+
   try {
     const { domain, question, userAnswer, history } = await request.json()
 

@@ -8,6 +8,7 @@ import { Navbar } from "@/components/Navbar";
 import * as RechartsPrimitive from "recharts";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { toast } from "sonner";
+import { authFetch } from "@/lib/api-client";
 
 type Status = "Applied" | "Reviewed" | "Interview" | "Hired" | "Rejected";
 
@@ -69,7 +70,7 @@ export default function RecruiterDashboard() {
     setShowOutreachPanel(true);
     const toastId = toast.loading("Drafting personalized AI Recruiter Outreach...");
     try {
-      const response = await fetch("/api/recruiter/outreach", {
+      const response = await authFetch("/api/recruiter/outreach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -131,7 +132,7 @@ export default function RecruiterDashboard() {
       // Fetch via secure server endpoint to bypass client RLS issues
       let loadedCandidates: any[] = [];
       try {
-        const res = await fetch("/api/recruiter/candidates");
+        const res = await authFetch("/api/recruiter/candidates");
         const dbCandidates = res.ok ? await res.json() : null;
         if (dbCandidates && dbCandidates.length > 0) {
           loadedCandidates = dbCandidates;
@@ -313,7 +314,7 @@ export default function RecruiterDashboard() {
         }
       ];
 
-      const mergedList = [...loadedCandidates.filter((c: any) => !c.id.startsWith("mock-")), ...premiumMocks];
+      const mergedList = [...loadedCandidates.filter((c: any) => !c.id.startsWith("mock-")), ...premiumMocks.map((m: any) => ({ ...m, profiles: { ...m.profiles, full_name: `${m.profiles.full_name} (sample)` } }))];
       setCandidates(mergedList);
 
       // Populate local status tracking
@@ -449,7 +450,7 @@ export default function RecruiterDashboard() {
 
       if (newStatus === "Rejected" && appId) {
         toast.promise(
-          fetch("/api/recruiter/reject-feedback", {
+          authFetch("/api/recruiter/reject-feedback", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ applicationId: appId }),
@@ -1458,7 +1459,7 @@ export default function RecruiterDashboard() {
                   setIsScheduleModalOpen(false);
                   
                   toast.promise(
-                    fetch("/api/recruiter/schedule-interview", {
+                    authFetch("/api/recruiter/schedule-interview", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({

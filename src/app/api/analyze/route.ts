@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Groq from 'groq-sdk'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { supabaseAdmin } from '@/lib/supabase'
+import { requireAuth, rateLimit } from '@/lib/server-auth'
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' })
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
@@ -33,10 +34,34 @@ function analyzeHesitations(text: string) {
   };
 }
 
-export async function POST(request: NextRequest) {
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024
+
+function isAllowedVideoUrl(raw: unknown): raw is string {
+  if (typeof raw !== 'string') return false
   try {
-    const { videoUrl, userId, language } = await request.json()
+    const url = new URL(raw)
+    const allowedHost = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co').host
+    return url.protocol === 'https:' && url.host === allowedHost
+  } catch {
+    return false
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request)
+  if (auth.error) return auth.error
+  const userId = auth.ctx.userId
+  const limited = rateLimit(`analyze:${userId}`, 10, 10 * 60_000)
+  if (limited) return limited
+
+  try {
+    const { videoUrl, language } = await request.json()
     const lang = language || 'en'
+
+    // Only videos stored in this project's Supabase storage may be fetched (prevents SSRF)
+    if (!isAllowedVideoUrl(videoUrl)) {
+      return NextResponse.json({ error: 'Invalid video URL' }, { status: 400 })
+    }
 
     const { data: videoRecord, error: insertError } = await supabaseAdmin
       .from('video_resumes')
@@ -52,7 +77,14 @@ export async function POST(request: NextRequest) {
     if (insertError) throw insertError
 
     const videoResponse = await fetch(videoUrl)
+    const declaredSize = Number(videoResponse.headers.get('content-length') || 0)
+    if (declaredSize > MAX_VIDEO_BYTES) {
+      return NextResponse.json({ error: 'Video is too large (50 MB max)' }, { status: 413 })
+    }
     const videoBuffer = await videoResponse.arrayBuffer()
+    if (videoBuffer.byteLength > MAX_VIDEO_BYTES) {
+      return NextResponse.json({ error: 'Video is too large (50 MB max)' }, { status: 413 })
+    }
     const videoFile = new File([videoBuffer], 'video.webm', { type: 'video/webm' })
 
     const transcription = await groq.audio.transcriptions.create({
