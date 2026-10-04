@@ -14,7 +14,7 @@ import { authFetch } from "@/lib/api-client";
 function formatFeedbackText(text: string, companyName?: string) {
   if (!text) return "";
   
-  const targetCompany = companyName || "Razorpay";
+  const targetCompany = companyName || "the company";
   
   // Clean placeholders dynamically
   let cleanedText = text;
@@ -288,10 +288,10 @@ export default function CandidateDashboard() {
       }
 
       const displayedList = activeJobs.length > 0 ? activeJobs : [
-        { id: "11111111-1111-1111-1111-111111111111", title: "Frontend Engineer", company: "Razorpay", location: "Bangalore · Remote", required_skills: ["React", "TypeScript", "Next.js"], description: "Join our core UI engineering team to build highly performant consumer checkout experiences. You will design clean modular components, optimize layout rendering speeds, and integrate next-generation client APIs." },
-        { id: "22222222-2222-2222-2222-222222222222", title: "Product Designer", company: "Zepto", location: "Mumbai", required_skills: ["Figma", "UX", "Prototyping"], description: "Help shape the future of quick-commerce grocery delivery! Design intuitive customer dashboards, create hyper-fast checkout funnel interactions, and align complex visual design systems." },
-        { id: "33333333-3333-3333-3333-333333333333", title: "ML Engineer", company: "CRED", location: "Bangalore", required_skills: ["Python", "PyTorch", "NLP"], description: "Build, scale, and optimize machine learning scoring modules that evaluate user transactions and predict credit capabilities. Work on core NLP and deep learning models in production cloud systems." },
-        { id: "44444444-4444-4444-4444-444444444444", title: "Growth Marketer", company: "Groww", location: "Remote", required_skills: ["SEO", "Content", "Analytics"], description: "Drive high-impact customer acquisition funnels for our core investment products. Build SEO strategies, analyze advertising data performance, and design organic content campaigns." }
+        { id: "11111111-1111-1111-1111-111111111111", title: "Frontend Engineer", company: "Acme Payments (sample)", location: "Bangalore · Remote", required_skills: ["React", "TypeScript", "Next.js"], description: "Join our core UI engineering team to build highly performant consumer checkout experiences. You will design clean modular components, optimize layout rendering speeds, and integrate next-generation client APIs." },
+        { id: "22222222-2222-2222-2222-222222222222", title: "Product Designer", company: "Northwind Retail (sample)", location: "Mumbai", required_skills: ["Figma", "UX", "Prototyping"], description: "Help shape the future of quick-commerce grocery delivery! Design intuitive customer dashboards, create hyper-fast checkout funnel interactions, and align complex visual design systems." },
+        { id: "33333333-3333-3333-3333-333333333333", title: "ML Engineer", company: "Contoso Fintech (sample)", location: "Bangalore", required_skills: ["Python", "PyTorch", "NLP"], description: "Build, scale, and optimize machine learning scoring modules that evaluate user transactions and predict credit capabilities. Work on core NLP and deep learning models in production cloud systems." },
+        { id: "44444444-4444-4444-4444-444444444444", title: "Growth Marketer", company: "Fabrikam Invest (sample)", location: "Remote", required_skills: ["SEO", "Content", "Analytics"], description: "Drive high-impact customer acquisition funnels for our core investment products. Build SEO strategies, analyze advertising data performance, and design organic content campaigns." }
       ];
       if (displayedList.length > 0) {
         setSelectedJobDetail(displayedList[0]);
@@ -364,10 +364,10 @@ export default function CandidateDashboard() {
 
   // Combined real database jobs + elegant fallback options
   const displayedJobs = jobs.length > 0 ? jobs : [
-    { id: "11111111-1111-1111-1111-111111111111", title: "Frontend Engineer", company: "Razorpay", location: "Bangalore · Remote", required_skills: ["React", "TypeScript", "Next.js"], description: "Join our core UI engineering team to build highly performant consumer checkout experiences. You will design clean modular components, optimize layout rendering speeds, and integrate next-generation client APIs." },
-    { id: "22222222-2222-2222-2222-222222222222", title: "Product Designer", company: "Zepto", location: "Mumbai", required_skills: ["Figma", "UX", "Prototyping"], description: "Help shape the future of quick-commerce grocery delivery! Design intuitive customer dashboards, create hyper-fast checkout funnel interactions, and align complex visual design systems." },
-    { id: "33333333-3333-3333-3333-333333333333", title: "ML Engineer", company: "CRED", location: "Bangalore", required_skills: ["Python", "PyTorch", "NLP"], description: "Build, scale, and optimize machine learning scoring modules that evaluate user transactions and predict credit capabilities. Work on core NLP and deep learning models in production cloud systems." },
-    { id: "44444444-4444-4444-4444-444444444444", title: "Growth Marketer", company: "Groww", location: "Remote", required_skills: ["SEO", "Content", "Analytics"], description: "Drive high-impact customer acquisition funnels for our core investment products. Build SEO strategies, analyze advertising data performance, and design organic content campaigns." }
+    { id: "11111111-1111-1111-1111-111111111111", title: "Frontend Engineer", company: "Acme Payments (sample)", location: "Bangalore · Remote", required_skills: ["React", "TypeScript", "Next.js"], description: "Join our core UI engineering team to build highly performant consumer checkout experiences. You will design clean modular components, optimize layout rendering speeds, and integrate next-generation client APIs." },
+    { id: "22222222-2222-2222-2222-222222222222", title: "Product Designer", company: "Northwind Retail (sample)", location: "Mumbai", required_skills: ["Figma", "UX", "Prototyping"], description: "Help shape the future of quick-commerce grocery delivery! Design intuitive customer dashboards, create hyper-fast checkout funnel interactions, and align complex visual design systems." },
+    { id: "33333333-3333-3333-3333-333333333333", title: "ML Engineer", company: "Contoso Fintech (sample)", location: "Bangalore", required_skills: ["Python", "PyTorch", "NLP"], description: "Build, scale, and optimize machine learning scoring modules that evaluate user transactions and predict credit capabilities. Work on core NLP and deep learning models in production cloud systems." },
+    { id: "44444444-4444-4444-4444-444444444444", title: "Growth Marketer", company: "Fabrikam Invest (sample)", location: "Remote", required_skills: ["SEO", "Content", "Analytics"], description: "Drive high-impact customer acquisition funnels for our core investment products. Build SEO strategies, analyze advertising data performance, and design organic content campaigns." }
   ];
 
   const filteredJobs = displayedJobs.filter(j => {

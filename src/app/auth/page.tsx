@@ -162,24 +162,12 @@ export default function AuthPage() {
             AI-powered video screening that ranks candidates by how they communicate, not how they write.
           </p>
           <div className="mt-8 grid grid-cols-2 gap-3.5">
-            <StatCard icon={Video} value="90s" label="All it takes to screen a candidate" />
-            <StatCard icon={Zap} value="10x" label="Faster than manual screening" />
-            <StatCard icon={Target} value="95%" label="Shortlist accuracy" />
+            <StatCard icon={Video} value="90s" label="Video pitch per candidate" />
+            <StatCard icon={Zap} value="6" label="Languages supported" />
+            <StatCard icon={Target} value="4" label="Scored dimensions" />
             <StatCard icon={Bot} value="AI-Powered" label="Smart communication scoring" />
           </div>
         </div>
-        <figure className="relative mt-10 rounded-[14px] border border-border bg-card p-5">
-          <blockquote className="text-[15px] leading-relaxed text-white/90">
-            "Vouch cut our screening time from 3 days to 20 minutes. We finally see who candidates really are."
-          </blockquote>
-          <figcaption className="mt-4 flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-full bg-brand text-sm font-bold text-brand-foreground">RK</div>
-            <div className="text-sm">
-              <div className="font-semibold text-white">Rohan Kumar</div>
-              <div className="text-muted-foreground">Head of Talent, Groww</div>
-            </div>
-          </figcaption>
-        </figure>
       </aside>
 
       {/* RIGHT PANEL */}
@@ -364,12 +352,6 @@ export default function AuthPage() {
                 </button>
               </p>
 
-              <div className="mt-12">
-                <div className="text-center text-xs uppercase tracking-[0.18em] text-muted-foreground">Trusted by top teams</div>
-                <div className="mt-4 flex flex-wrap items-center justify-center gap-x-7 gap-y-3 text-base font-semibold text-white/55">
-                  <span>Razorpay</span><span>Zepto</span><span className="tracking-[0.2em]">CRED</span><span>Groww</span>
-                </div>
-              </div>
             </>
           )}
         </div>

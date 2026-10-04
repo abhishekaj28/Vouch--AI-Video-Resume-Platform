@@ -8,6 +8,14 @@ Vouch lets a student record (or upload) a short video pitch and get it transcrib
 
 > This is a hackathon-style project. Some parts are fully wired to a backend, while others are mocked or hardcoded. The feature table and the "Known limitations" section below say which is which.
 
+## Screenshots
+
+![Landing page](docs/screenshots/landing.png)
+
+![Sign-in page](docs/screenshots/sign-in.png)
+
+The signed-in candidate and recruiter dashboards are not shown because they need a configured Supabase project.
+
 ## Features
 
 | Area | Feature | Status |
@@ -20,7 +28,7 @@ Vouch lets a student record (or upload) a short video pitch and get it transcrib
 | Candidate | Pitch coach: tips, talking points and a teleprompter script generated from a pasted job description (Gemini) | Implemented |
 | Candidate | Skill assessment (Frontend, Backend, Design): fixed multiple-choice questions, score saved to the `assessments` table | Implemented. The question bank is hardcoded in the page |
 | Candidate | Mock interview (Frontend, Backend, Design): typed answers scored by Gemini, which returns feedback and a follow-up question | Implemented. The first question per domain is hardcoded. The interview is text only, with no voice or video |
-| Candidate | Browse jobs and apply with your video resume | Implemented. If the `jobs` table is empty the page shows 4 hardcoded sample jobs (Razorpay, Zepto, CRED, Groww) |
+| Candidate | Browse jobs and apply with your video resume | Implemented. If the `jobs` table is empty the page shows 4 hardcoded sample jobs from fictional companies, labelled "(sample)" |
 | Candidate | Resume PDF upload (PDF only, "Max size 5MB" is shown in the UI) | Implemented. The size limit is only text in the UI and is not enforced in code |
 | Candidate | Public/private toggle, profile-view history, interview list | Implemented (reads and writes Supabase) |
 | Candidate | Talent Pass at `/share/[id]`: scorecard, video and QR code, downloadable as a PNG | Implemented. The QR image comes from the third-party `api.qrserver.com` service |

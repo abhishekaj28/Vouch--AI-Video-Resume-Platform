@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle()
 
     const jobTitle = job?.title || 'Frontend Developer'
-    const companyName = job?.company || 'Razorpay'
+    const companyName = job?.company || 'the company'
     const candidateName = app.profiles?.full_name || 'Candidate'
     const scores = app.video_resumes || {}
     const transcript = scores.transcript || ''

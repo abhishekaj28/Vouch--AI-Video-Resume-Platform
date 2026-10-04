@@ -45,16 +45,6 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="mt-16">
-            <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-extrabold">Trusted by scaling startups worldwide</div>
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-base font-extrabold text-white/50">
-              <span className="hover:text-white transition">Razorpay</span>
-              <span className="hover:text-white transition">Zepto</span>
-              <span className="tracking-[0.2em] hover:text-white transition">CRED</span>
-              <span className="hover:text-white transition">Groww</span>
-              <span className="hover:text-white transition">Swiggy</span>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -195,10 +185,10 @@ export default function Home() {
       <section className="px-6 py-16 relative z-10">
         <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 rounded-[20px] bg-brand p-10 text-brand-foreground md:grid-cols-4 shadow-xl">
           {[
-            { v: "10K+", l: "Candidates" },
-            { v: "500+", l: "Companies" },
-            { v: "95%", l: "Match Accuracy" },
-            { v: "10x", l: "Faster Screening" },
+            { v: "90s", l: "Video Pitch" },
+            { v: "6", l: "Languages Supported" },
+            { v: "4", l: "Scored Dimensions" },
+            { v: "2", l: "AI Models (Whisper + Gemini)" },
           ].map((s) => (
             <div key={s.l} className="text-center">
               <div className="font-heading text-3xl font-black sm:text-4xl">{s.v}</div>
